@@ -1,0 +1,10 @@
+{
+  "watch": ["."],
+  "ignore": [
+    "node_modules",
+    "messages.json",
+    "auth"
+  ],
+  "ext": "js,json",
+  "exec": "node bots.js"
+}
