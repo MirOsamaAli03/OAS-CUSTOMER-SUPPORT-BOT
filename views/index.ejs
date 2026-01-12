@@ -10,6 +10,7 @@
         :root {
             --primary: #075e54;
             --secondary: #25d366;
+            --third: rgb(6, 193, 240); 
             --danger: #ef4444;
             --bg: #f8fafc;
             --text: #1e293b;
@@ -138,6 +139,23 @@
             color: var(--text);
         }
 
+          .con_btn {
+            background: var(--third);
+            color: white;
+            padding: 10px 18px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: opacity 0.2s;
+        }
+
+        .con_btn:hover {
+            opacity: 0.9;
+        }
+
+     
+
         .close-btn {
             width: 32px;
             height: 32px;
@@ -179,6 +197,10 @@
         <header>
             <h1><i class="fab fa-whatsapp"></i> OAS Customer Support Dashboard</h1>
             <span class="count-badge">Live Status</span>
+        </header>
+        <header>
+                            <a href="/configure" class="con_btn">Configuration</a>
+
         </header>
 
         <div class="section-header" onclick="toggleSection('attentionContent', 'chevron1')">

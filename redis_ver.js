@@ -61,9 +61,8 @@ const analyzed = mongoose.model("Analyzed_messages", {
     message_text: String,
     group_name: String,
     attention: Boolean,
-    is_fif: Boolean,
-    is_thr: Boolean,
-    is_one: Boolean
+
+    is_notified: Boolean
 
 })
 
@@ -79,6 +78,24 @@ const SupportNumber = mongoose.model(
     "SupportNumber",
     supportNumberSchema
 );
+
+// const notifyNumberSchema = new mongoose.Schema(
+//     {
+//         name: String,
+//         num: String
+
+//     },
+//     { collection: "notify_numbers" } // 👈 IMPORTANT
+// );
+
+// const notifyNumber = mongoose.model(
+//     "notifyNumber",
+//     notifyNumberSchema
+// );
+
+
+
+
 
 const grp_link = new mongoose.Schema(
     {
@@ -136,8 +153,14 @@ function toJid(to) {
 }
 
 
+let fif_min_num = "923092400176"
+let thirty_min_num = "923212242432"
+let one_hour_num = "14696939509"
 
 
+let notify_time = 30 * 60 * 1000
+
+let notify_nums = []
 const retrival = async (User) => {
 
 
@@ -175,7 +198,7 @@ const retrival = async (User) => {
             let is_support = false
 
             for (const number of numbers) {
-                if ((last10[i].person_num||0).toString() == number.num) {
+                if ((last10[i].person_num || 0).toString() == number.num) {
 
                     lastMessage += "Support: "
                     is_support = true
@@ -208,79 +231,40 @@ const retrival = async (User) => {
 
             if (!an[0].attention) {
 
-                console.log(an[0].attention)
                 const lastTime = last10[0].milli_sec
-                const FIFTEEN_MIN = 15 * 60 * 1000
-                const THIRTY_MIN = 30 * 60 * 1000
-                const ONE_HOUR = 60 * 60 * 1000
-
                 const now = Date.now()
 
 
-                if (now - lastTime >= FIFTEEN_MIN) {
-                    console.log("✅ 15 minutes crossed")
-                    an[0].is_fif = true;
-                    await an[0].save();
-                    const gl = await grp_links.find({ group_name: group })
+                if (now - lastTime >= notify_time) {
 
-                    if (gl.length > 0) {
-                        const response = await axios.post(
-                            "http://localhost:3000/send",
-                            {
-                                to: "923092400176",
-                                text: `Group needs your attention\nGroup Name: ${group}\nGroup link: ${gl[0].link}`,
-                            },
-                            {
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                            }
-                        )
+                    console.log(notify_time, " is exceeded\n")
+                    if (!an[0].is_notified) {
 
-                    }
-                    else {
-
-                        const response = await axios.post(
-                            "http://localhost:3000/send",
-                            {
-                                to: "923092400176",
-                                text: `Group needs your attention\nGroup Name: ${group}`,
-                            },
-                            {
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                            }
-                        )
-                    }
-
-                    if (now - lastTime >= THIRTY_MIN) {
-                        console.log("✅ 30 minutes crossed")
-                        an[0].is_thr = true;
-                        await an[0].save();
-
-                        if (gl.length > 0) {
-                            const response = await axios.post(
-                                "http://localhost:3000/send",
-                                {
-                                    to: "923212242432",
-                                    text: `Group needs your attention\nGroup Name: ${group}\nGroup link: ${gl[0].link}`,
-                                },
-                                {
-                                    headers: {
-                                        "Content-Type": "application/json",
+                        if (notify_nums.length > 0) {
+                            for (const n of notify_nums) {
+                                console.log(`Sending Notification to ${n}\n`)
+                                const response = await axios.post(
+                                    "http://localhost:3000/send",
+                                    {
+                                        to: `${n}`,
+                                        text: `Group needs your attention\nGroup Name: ${group}}`,
                                     },
-                                }
-                            )
-
+                                    {
+                                        headers: {
+                                            "Content-Type": "application/json",
+                                        },
+                                    }
+                                )
+                            }
                         }
                         else {
 
+
                             const response = await axios.post(
                                 "http://localhost:3000/send",
                                 {
-                                    to: "923212242432",
-                                    text: `Group needs your attention\nGroup Name: ${group}`,
+                                    to: `${fif_min_num}`,
+                                    text: `Group needs your attention\nGroup Name: ${group}}`,
                                 },
                                 {
                                     headers: {
@@ -288,70 +272,27 @@ const retrival = async (User) => {
                                     },
                                 }
                             )
-                        }
 
-                        if (now - lastTime >= ONE_HOUR) {
-                            console.log("✅ One Hour crossed")
-
-                            an[0].is_one = true;
-                            await an[0].save();
-
-                            if (gl.length > 0) {
-                                const response = await axios.post(
-                                    "http://localhost:3000/send",
-                                    {
-                                        to: "14696939509",
-                                        text: `Group needs your attention\nGroup Name: ${group}\nGroup link: ${gl[0].link}`,
-                                    },
-                                    {
-                                        headers: {
-                                            "Content-Type": "application/json",
-                                        },
-                                    }
-                                )
-
-                            }
-                            else {
-
-                                const response = await axios.post(
-                                    "http://localhost:3000/send",
-                                    {
-                                        to: "14696939509",
-                                        text: `Group needs your attention\nGroup Name: ${group}`,
-                                    },
-                                    {
-                                        headers: {
-                                            "Content-Type": "application/json",
-                                        },
-                                    }
-                                )
-                            }
 
 
 
                         }
-
+                        an[0].is_notified = true
+                        an[0].save()
                     }
+                    else {
 
+
+                        console.log("Message Already Sent!!\n")
+                    }
                 }
-
-
-
-                else {
-                    console.log("⏳ Less than 15 minutes")
-                }
-
-
 
             }
-            // else{
 
-            //   console.log("Problem has been solved")
-            //   await analyzed.deleteMany({ group_name: group });
 
-            // }
             is_analyzed = true
-        } else {
+        }
+        else {
             const hasDocs = await analyzed.exists({});
 
             if (hasDocs) {
@@ -383,116 +324,31 @@ const retrival = async (User) => {
 
 
 
-            await analyzed.create({ group_name: group, message_text: lastMessage, attention: istrue, is_fif: false, is_thr: false, is_one: false })
+            await analyzed.create({ group_name: group, message_text: lastMessage, attention: istrue, is_notified: false })
         }
 
 
 
-        // console.log(lastMessage)
-
-
-        // const reply = await askGPT(lastMessage);
-        // console.log(reply)
-        // const istrue = reply.toLowerCase().includes('yes')
-
-        // console.log(istrue)
-
-
-        // if (is_analyzed) continue;
-
-        // const reply = await llama(lastMessage, `You are a helpful customer support agent. 
-        // Analyze if this customer message indicates that his/her problem has been solved or not.
-
-        // STRICT RULES:
-        // - reply only yes or no
-        // - no explanation requried
-
-        // `)
-        // console.log(reply.message.content);
-
-        // const istrue = reply.message.content.toLowerCase().includes('yes')
-
-        // console.log(istrue)
-
-
-
-
-        // if (!istrue) {
-        //   const lastTime = last10[0].milli_sec
-        //   const FIFTEEN_MIN = 15 * 60 * 1000
-        //   const THIRTY_MIN = 30 * 60 * 1000
-        //   const ONE_HOUR = 60 * 60 * 1000
-
-        //   const now = Date.now()
-
-        //   if (now - lastTime >= FIFTEEN_MIN) {
-        //     console.log("✅ 15 minutes crossed")
-
-        //     const response = await axios.post(
-        //       "http://localhost:3000/send",
-        //       {
-        //         to: "923092400176",
-        //         text: "group need your attention",
-        //       },
-        //       {
-        //         headers: {
-        //           "Content-Type": "application/json",
-        //         },
-        //       }
-        //     )
-        //     if (now - lastTime >= THIRTY_MIN) {
-        //       console.log("✅ 30 minutes crossed")
-
-        //       // const response = await axios.post(
-        //       //   "http://localhost:3000/send",
-        //       //   {
-        //       //     to: "923212242432",
-        //       //     text: "group need your attention",
-        //       //   },
-        //       //   {
-        //       //     headers: {
-        //       //       "Content-Type": "application/json",
-        //       //     },
-        //       //   }
-        //       // )
-
-        //       if (now - lastTime >= ONE_HOUR) {
-        //         console.log("✅ One Hour crossed")
-
-        //         // const response = await axios.post(
-        //         //   "http://localhost:3000/send",
-        //         //   {
-        //         //     to: "14696939509",
-        //         //     text: "group need your attention",
-        //         //   },
-        //         //   {
-        //         //     headers: {
-        //         //       "Content-Type": "application/json",
-        //         //     },
-        //         //   }
-        //         // )
-
-
-
-        //       }
-
-        //     }
-
-        //   }
-
-
-
-        //   else {
-        //     console.log("⏳ Less than 15 minutes")
-        //   }
-
-
-        // }
     }
 }
 
+
 let checkerStarted = false;
 
+let timer = 120
+let checkerInterval = null
+
+// function startReplyChecker() {
+//     if (checkerInterval) {
+//         clearInterval(checkerInterval);
+//     }
+
+//     console.log(`🕒 Reply checker started with ${timer}s`);
+
+//     checkerInterval = setInterval(() => {
+//         retrival(User);
+//     }, timer * 1000);
+// }
 
 
 function startReplyChecker() {
@@ -500,7 +356,7 @@ function startReplyChecker() {
     checkerStarted = true;
 
     console.log('🕒 Reply checker started');
-    setInterval(() => retrival(User), 60 * 1000);
+    setInterval(() => retrival(User), timer * 1000);
 }
 
 
@@ -610,67 +466,6 @@ async function startWhatsApp() {
             return null;
         }
     }
-
-    //     async function getgrouplink(jid) {
-    //   if (!jid.endsWith('@g.us')) return null;
-
-    //   try {
-    //     const metadata = await sock.groupMetadata(jid);
-
-    //     const botJid = sock.user.id.split(':')[0] + '@s.whatsapp.net';
-    //     console.log(botJid)
-
-    //     const isBotAdmin = metadata.participants.some(
-    //       p => p.id === botJid && (p.admin === 'admin' || p.admin === 'superadmin')
-    //     );
-
-    //     if (!isBotAdmin) {
-    //       console.log('Bot is not admin, cannot fetch invite link');
-    //       return null;
-    //     }
-
-    //     const code = await sock.groupInviteCode(jid);
-    //     const gl = `https://chat.whatsapp.com/${code}`;
-    //     console.log('Group link:', gl);
-
-    //     return gl;
-
-    //   } catch (err) {
-    //     console.error('Failed to get group invite link:', err);
-    //     return null;
-    //   }
-    // }
-
-
-    // async function getgrouplink(jid) {
-    //     if (!jid.endsWith('@g.us')) return null
-
-    //     try {
-    //         const metadata = await sock.groupMetadata(jid)
-
-    //         const isBotAdmin = metadata.participants.some(p =>
-    //             areJidsSameUser(p.id, sock.user.id) &&
-    //             (p.admin === 'admin' || p.admin === 'superadmin')
-    //         )
-    //         console.log('BOT JID:', sock.user.id)
-
-    //         if (!isBotAdmin) {
-    //             console.log('Bot is not admin (verified by Baileys)')
-    //             return null
-    //         }
-
-    //         const code = await sock.groupInviteCode(jid)
-    //         const gl = `https://chat.whatsapp.com/${code}`
-    //         console.log('Group link:', gl)
-
-    //         return gl
-
-    //     } catch (err) {
-    //         console.error('Failed to get group invite link:', err)
-    //         return null
-    //     }
-    // }
-
 
     // --------------------
     // MESSAGE LISTENER
@@ -808,6 +603,12 @@ app.use(express.static('public')); // For CSS/JS files
 
 app.use(express.json());
 
+
+
+app.get('/configure', (req, res) => {
+    res.render('configure');
+});
+
 // Add these to your backend file
 
 // Dashboard Home
@@ -896,24 +697,61 @@ app.post('/logout', async (_req, res) => {
 
 app.post('/delete-group', async (req, res) => {
     const { group_name } = req.body;
-  
+
     await analyzed.deleteMany({ group_name });
-  
+
     res.json({ success: true });
-  });
-  
-
- app.post('/attention-true', async (req, res) => {
-  const { group_name } = req.body;
-
-  const doc = await analyzed.findOne({ group_name });
-  if (doc) {
-    doc.attention = true;
-    await doc.save();
-  }
-
-  res.json({ success: true });
 });
+
+
+app.post('/attention-true', async (req, res) => {
+    const { group_name } = req.body;
+
+    const doc = await analyzed.findOne({ group_name });
+    if (doc) {
+        doc.attention = true;
+        await doc.save();
+    }
+
+    res.json({ success: true });
+});
+
+app.post('/set-time', async (req, res) => {
+    const { New_time } = req.body;
+
+    timer = Number(New_time)
+    console.log("New Timer: ", timer)
+    startReplyChecker()
+
+    res.json({ success: true });
+});
+
+app.post('/set-time-for_notify', async (req, res) => {
+    const { New_time } = req.body;
+
+    notify_time = Number(New_time)
+    notify_time = notify_time * 60 * 1000
+    console.log("New Timer For Notifcation: ", notify_time)
+    // startReplyChecker()
+
+    res.json({ success: true });
+});
+
+
+app.post('/set-numbers', async (req, res) => {
+    const { New_number } = req.body;
+
+    let num = New_number
+    notify_nums.push(num)
+
+    console.log(notify_nums)
+
+    res.json({ success: true });
+});
+
+
+
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () =>
