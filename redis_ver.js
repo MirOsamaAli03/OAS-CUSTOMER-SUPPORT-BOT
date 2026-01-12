@@ -557,6 +557,7 @@ async function startWhatsApp() {
 
 import fsp from 'fs/promises';   // rename to 'fsp'
 import { group, timeStamp } from 'console';
+import { Items } from 'openai/resources/conversations.mjs';
 
 async function readLastMessage() {
     try {
@@ -748,6 +749,26 @@ app.post('/set-numbers', async (req, res) => {
 
     res.json({ success: true });
 });
+
+app.post('/del-numbers', async (req, res) => {
+    const { del_number } = req.body;
+
+    let num = del_number
+    if (!notify_nums.includes(num)) {
+        res.json({ success: false })
+
+
+    }
+   else{
+    notify_nums = notify_nums.filter(item => item != num)
+
+    console.log(notify_nums)
+
+    res.json({ success: true });
+
+   }
+});
+
 
 
 

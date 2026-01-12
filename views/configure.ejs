@@ -217,6 +217,7 @@
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -230,6 +231,7 @@
             --bg: #f0f2f5;
             --text-dark: #1f2937;
             --text-light: #6b7280;
+            --warning: red
         }
 
         body {
@@ -250,7 +252,7 @@
             padding: 15px 40px;
             display: flex;
             align-items: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
             z-index: 1000;
         }
 
@@ -264,7 +266,9 @@
             transition: color 0.2s;
         }
 
-        .header a:hover { color: var(--accent); }
+        .header a:hover {
+            color: var(--accent);
+        }
 
         /* Main Layout */
         .main-container {
@@ -274,14 +278,15 @@
             align-items: center;
             padding: 40px 20px;
             gap: 30px;
-            flex-wrap: wrap; /* Responsive for mobile */
+            flex-wrap: wrap;
+            /* Responsive for mobile */
         }
 
         .settings-card {
             background: #ffffff;
             padding: 35px;
             border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.04);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
             width: 100%;
             max-width: 400px;
             border: 1px solid #e5e7eb;
@@ -359,6 +364,7 @@
             align-items: center;
             justify-content: center;
             gap: 10px;
+            margin-bottom: 10px;
         }
 
         .btn-submit:hover {
@@ -366,11 +372,45 @@
             box-shadow: 0 4px 12px rgba(18, 140, 126, 0.2);
         }
 
-        .btn-submit:active { transform: scale(0.98); }
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+
+        .btn-submit-d {
+            width: 100%;
+            padding: 14px;
+            background: var(--warning);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-submit-d:hover {
+            background: var(--primary-light);
+            box-shadow: 0 4px 12px rgba(18, 140, 126, 0.2);
+        }
+
+        .btn-submit-d:active {
+            transform: scale(0.98);
+        }
 
         @media (max-width: 768px) {
-            .main-container { flex-direction: column; align-items: stretch; }
-            .settings-card { max-width: 100%; }
+            .main-container {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .settings-card {
+                max-width: 100%;
+            }
         }
     </style>
 </head>
@@ -385,21 +425,31 @@
     </header>
 
     <div class="main-container">
-        
+
         <div class="settings-card">
             <div class="icon-box">
                 <i class="fas fa-phone-alt"></i>
             </div>
             <h3>Support Numbers</h3>
-            <p>Add official support numbers to distinguish them from customers in the chat logs.</p>
-            
+            <p>Add and delete official support numbers to distinguish them from customers in the chat logs.</p>
+
             <div class="input-group">
-                <input type="text" id="number_input" placeholder="923XXXXXXXXX" 
-                       pattern="^92[0-9]{10}$" maxlength="12" inputmode="numeric" required>
+                <input type="text" id="number_input" placeholder="923XXXXXXXXX" pattern="^92[0-9]{10}$" maxlength="12"
+                    inputmode="numeric" required>
             </div>
-            
+
+
             <button class="btn-submit" onclick="sendData()">
                 Update Numbers <i class="fas fa-save"></i>
+            </button>
+
+            <div class="input-group">
+                <input type="text" id="delete_input" placeholder="923XXXXXXXXX" pattern="^92[0-9]{10}$" maxlength="12"
+                    inputmode="numeric" required>
+            </div>
+
+            <button class="btn-submit-d" onclick="delData()">
+                Delete Numbers <i class="fas fa-trash"></i>
             </button>
         </div>
 
@@ -409,11 +459,11 @@
             </div>
             <h3>Notification Interval</h3>
             <p>Set how often the system checks for unattended groups (measured in seconds).</p>
-            
+
             <div class="input-group">
                 <input type="number" id="timer_input" placeholder="e.g. 30" min="1" required>
             </div>
-            
+
             <button class="btn-submit" onclick="sendNewTime()">
                 Save Timer <i class="fas fa-history"></i>
             </button>
@@ -440,7 +490,34 @@
             if (data.success) {
                 Swal.fire('Success', 'Support number added!', 'success').then(() => location.reload());
             }
+
         }
+
+        async function delData() {
+            const input = document.getElementById('delete_input');
+            if (!input.checkValidity()) {
+                input.reportValidity();
+                return;
+            }
+
+            const res = await fetch(`/del-numbers`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ del_number: input.value })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('Success', 'Support number deleted!', 'success').then(() => location.reload());
+            }
+            else {
+
+                Swal.fire('Error', 'Support number not found!', 'error');
+
+            }
+
+        }
+
 
         async function sendNewTime() {
             const input = document.getElementById('timer_input');
@@ -462,4 +539,5 @@
         }
     </script>
 </body>
+
 </html>
