@@ -79,19 +79,19 @@ const SupportNumber = mongoose.model(
     supportNumberSchema
 );
 
-// const notifyNumberSchema = new mongoose.Schema(
-//     {
-//         name: String,
-//         num: String
+const notifyNumberSchema = new mongoose.Schema(
+    {
 
-//     },
-//     { collection: "notify_numbers" } // 👈 IMPORTANT
-// );
+        num: String
 
-// const notifyNumber = mongoose.model(
-//     "notifyNumber",
-//     notifyNumberSchema
-// );
+    },
+    { collection: "notify_numbers" } // 👈 IMPORTANT
+);
+
+const notifyNumber = mongoose.model(
+    "notifyNumber",
+    notifyNumberSchema
+);
 
 
 
@@ -156,13 +156,15 @@ function toJid(to) {
 let fif_min_num = "923092400176"
 let thirty_min_num = "923212242432"
 let one_hour_num = "14696939509"
-
-
 let notify_time = 30 * 60 * 1000
 
 let notify_nums = []
+
 const retrival = async (User) => {
 
+
+    let not_num = await notifyNumber.distinct('num')
+    console.log(not_num)
 
     const numbers = await SupportNumber.find();
     console.log(numbers[0].num);
@@ -240,8 +242,8 @@ const retrival = async (User) => {
                     console.log(notify_time, " is exceeded\n")
                     if (!an[0].is_notified) {
 
-                        if (notify_nums.length > 0) {
-                            for (const n of notify_nums) {
+                        if (not_num.length > 0) {
+                            for (const n of not_num) {
                                 console.log(`Sending Notification to ${n}\n`)
                                 const response = await axios.post(
                                     "http://localhost:3000/send",
@@ -259,6 +261,7 @@ const retrival = async (User) => {
                         }
                         else {
 
+                            console.log(`Sending Notification to Osama\n`)
 
                             const response = await axios.post(
                                 "http://localhost:3000/send",
@@ -606,8 +609,10 @@ app.use(express.json());
 
 
 
-app.get('/configure', (req, res) => {
-    res.render('configure');
+app.get('/configure', async (req, res) => {
+
+    const not_num = await notifyNumber.distinct("num")
+    res.render('configure', { not_num });
 });
 
 // Add these to your backend file
@@ -743,10 +748,13 @@ app.post('/set-numbers', async (req, res) => {
     const { New_number } = req.body;
 
     let num = New_number
-    notify_nums.push(num)
+    // notify_nums.push(num)
 
-    console.log(notify_nums)
+    // console.log(notify_nums)
 
+    await notifyNumber.create({ num: num })
+    let not_num = await notifyNumber.distinct('num')
+    console.log(not_num)
     res.json({ success: true });
 });
 
@@ -754,19 +762,36 @@ app.post('/del-numbers', async (req, res) => {
     const { del_number } = req.body;
 
     let num = del_number
-    if (!notify_nums.includes(num)) {
+    // if (!notify_nums.includes(num)) {
+    //     res.json({ success: false })
+
+
+    // }
+    // else {
+    //     notify_nums = notify_nums.filter(item => item != num)
+
+    //     console.log(notify_nums)
+    //     // await notifyNumber.deleteMany({num:num})
+
+
+    //     res.json({ success: true });
+
+    // }
+
+    const exists = await notifyNumber.exists({ num: num });
+
+    if (exists) {
+        console.log("✅ Exists");
+        await notifyNumber.deleteMany({ num: num });
+        res.json({ success: true });
+
+
+    } else {
+        console.log("❌ Not found");
         res.json({ success: false })
 
-
     }
-   else{
-    notify_nums = notify_nums.filter(item => item != num)
 
-    console.log(notify_nums)
-
-    res.json({ success: true });
-
-   }
 });
 
 

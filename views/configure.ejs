@@ -434,8 +434,24 @@
             <p>Add and delete official support numbers to distinguish them from customers in the chat logs.</p>
 
             <div class="input-group">
-                <input type="text" id="number_input" placeholder="923XXXXXXXXX" pattern="^92[0-9]{10}$" maxlength="12"
-                    inputmode="numeric" required>
+                <input list="numbers" type="text" id="number_input" placeholder="923XXXXXXXXX" pattern="^92[0-9]{10}$"
+                    maxlength="12" inputmode="numeric" required>
+
+                <datalist id="numbers">
+
+                    <% not_num.forEach(n=> {%>
+
+
+                        <option value="<%= n %>"></option>
+
+
+
+
+                        <% })%>
+
+                </datalist>
+
+
             </div>
 
 
@@ -444,8 +460,23 @@
             </button>
 
             <div class="input-group">
-                <input type="text" id="delete_input" placeholder="923XXXXXXXXX" pattern="^92[0-9]{10}$" maxlength="12"
-                    inputmode="numeric" required>
+                <input list="del_numbers" type="text" id="delete_input" placeholder="923XXXXXXXXX"
+                    pattern="^92[0-9]{10}$" maxlength="12" inputmode="numeric" required>
+
+
+                <datalist id="del_numbers">
+
+                    <% not_num.forEach(n=> {%>
+
+
+                        <option value="<%= n %>"></option>
+
+
+
+
+                        <% })%>
+
+                </datalist>
             </div>
 
             <button class="btn-submit-d" onclick="delData()">
