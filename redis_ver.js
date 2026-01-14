@@ -246,7 +246,7 @@ const retrival = async (User) => {
                             for (const n of not_num) {
                                 console.log(`Sending Notification to ${n}\n`)
                                 const response = await axios.post(
-                                    "http://localhost:3000/send",
+                                    "http://localhost:5700/send",
                                     {
                                         to: `${n}`,
                                         text: `Group needs your attention\nGroup Name: ${group}}`,
@@ -264,7 +264,7 @@ const retrival = async (User) => {
                             console.log(`Sending Notification to Osama\n`)
 
                             const response = await axios.post(
-                                "http://localhost:3000/send",
+                                "http://localhost:5700/send",
                                 {
                                     to: `${fif_min_num}`,
                                     text: `Group needs your attention\nGroup Name: ${group}}`,
@@ -422,7 +422,7 @@ async function startWhatsApp() {
 
                 // console.log("okay")
                 // // const response = await axios.post(
-                // //     "http://localhost:3000/logout")
+                // //     "http://localhost:5700/logout")
 
                 // setInterval(() => {
                 //     startWhatsApp();
@@ -799,7 +799,10 @@ app.post('/del-numbers', async (req, res) => {
 
 
 
-const PORT = process.env.PORT || 3000;
+// const PORT = process.env.PORT || 5700;
+
+const PORT = 5700;
+
 app.listen(PORT, () =>
     console.log(`🚀 HTTP API running on http://localhost:${PORT}`)
 );
