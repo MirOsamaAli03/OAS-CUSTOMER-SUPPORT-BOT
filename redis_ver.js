@@ -653,6 +653,10 @@ app.get('/chat/:groupName', async (req, res) => {
     }
 });
 
+app.get('/', (req, res) => {
+  res.redirect('/dashboard');
+});
+
 
 app.get('/health', (_req, res) =>
     res.json({ ok: true, connected: isConnected })
@@ -799,9 +803,14 @@ app.post('/del-numbers', async (req, res) => {
 
 
 
+<<<<<<< HEAD
 // const PORT = process.env.PORT || 5700;
 
 const PORT = 5700;
+=======
+// const PORT = process.env.PORT || 3000;
+const PORT = 3000;
+>>>>>>> 5950476015dd94f6601b3d63e6a1e610d29e5886
 
 app.listen(PORT, () =>
     console.log(`🚀 HTTP API running on http://localhost:${PORT}`)
