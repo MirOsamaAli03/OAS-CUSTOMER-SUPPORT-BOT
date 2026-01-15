@@ -140,7 +140,7 @@
         }
 
           .con_btn {
-            background: var(--third);
+            background: var(--secondary);
             color: white;
             padding: 10px 18px;
             text-decoration: none;
@@ -200,6 +200,10 @@
         </header>
         <header>
                             <a href="/configure" class="con_btn">Configuration</a>
+                            <a href="/logout_bot" class="con_btn">Logout</a>
+
+                            <!-- <button class="con_btn" onclick="logout()">Logout</button> -->
+
 
         </header>
 
@@ -284,7 +288,8 @@
             content.classList.toggle('show');
             chevron.classList.toggle('rotate');
         }
-
+        
+      
         async function send_del(grp) {
             try {
                 const res = await fetch('/delete-group', {
