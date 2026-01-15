@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agent Access | Secure Login</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --whatsapp-green: #25d366;
+            --dark-green: #075e54;
+            --light-green: #dcf8c6;
+            --white: #ffffff;
+            --off-white: #f0f2f5;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background-color: var(--off-white);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .auth-container {
+            background: var(--white);
+            width: 450px;
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(7, 94, 84, 0.1);
+            text-align: center;
+            border: 1px solid rgba(37, 211, 102, 0.2);
+        }
+
+        .logo-area {
+            width: 70px;
+            height: 70px;
+            background: var(--whatsapp-green);
+            color: white;
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            margin: 0 auto 20px;
+        }
+
+        h1 {
+            color: var(--dark-green);
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        p {
+            color: #666;
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+        }
+
+        .input-wrapper {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-wrapper label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--dark-green);
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .input-field {
+            position: relative;
+        }
+
+        .input-field i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--whatsapp-green);
+        }
+
+        .input-field input {
+            width: 100%;
+            padding: 14px 15px 14px 45px;
+            border: 2px solid #e1e8ed;
+            border-radius: 12px;
+            font-size: 1rem;
+            outline: none;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        .input-field input:focus {
+            border-color: var(--whatsapp-green);
+            background-color: #fafff8;
+            box-shadow: 0 0 0 4px rgba(37, 211, 102, 0.1);
+        }
+
+        .btn-green {
+            width: 100%;
+            background: var(--whatsapp-green);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-green:hover {
+            background: #20bd5c;
+        }
+
+        .toggle-link {
+            margin-top: 25px;
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .toggle-link span {
+            color: var(--dark-green);
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        /* Hidden states for toggle */
+        .hidden {
+            display: none;
+        }
+
+        #togglePass,
+        #togglePass2 {
+            left: auto !important;
+            right: 15px !important;
+        }
+
+        /* Eye icon k liye input me right padding */
+        .input-field input {
+            padding-right: 45px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="auth-container">
+        <div class="logo-area">
+            <i class="fas fa-shield-alt"></i>
+        </div>
+
+        <div id="login-section">
+            <h1>Agent Login</h1>
+            <p>Enter your credentials to access the dashboard.</p>
+            <form>
+                <div class="input-wrapper">
+                    <label>Email Address</label>
+                    <div class="input-field">
+                        <i class="fas fa-envelope"></i>
+                        <input id="eml" type="text" pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$" name="email"
+                            placeholder="agent@support.com" required>
+                    </div>
+                </div>
+                <div class="input-wrapper">
+                    <label>Password</label>
+                    <div class="input-field">
+                        <i class="fas fa-lock"></i>
+                        <input id="passl" type="password" name="password" placeholder="••••••••" required>
+
+                        <i class="fas fa-eye" id="togglePass2" style="cursor:pointer;"></i>
+
+                    </div>
+                </div>
+                <button type="button" class="btn-green" onclick="sendDatalogin()">Sign In</button>
+            </form>
+            <div class="toggle-link">
+                Don't have an account? <span onclick="toggleAuth()">Sign Up</span>
+            </div>
+        </div>
+
+        <div id="signup-section" class="hidden">
+            <h1>Create Account</h1>
+            <p>Register as a new support agent.</p>
+            <form>
+                <!-- <div class="input-wrapper">
+                    <label>Full Name</label>
+                    <div class="input-field">
+                        <i class="fas fa-user"></i>
+                        <input id="fname" type="text" name="name" placeholder="John Doe" required>
+                    </div>
+                </div> -->
+                <div class="input-wrapper">
+                    <label>Email Address</label>
+                    <div class="input-field">
+                        <i class="fas fa-envelope"></i>
+                        <input id="em" type="text" pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$" name="email"
+                            placeholder="agent@support.com" required>
+                    </div>
+                </div>
+                <div class="input-wrapper">
+                    <label>Password</label>
+                    <div class="input-field">
+                        <i class="fas fa-lock"></i>
+                        <input id="pass" type="password" name="password" placeholder="••••••••" required>
+
+                        <i class="fas fa-eye" id="togglePass" style="cursor:pointer;"></i>
+
+                    </div>
+                </div>
+                <button type="button" class="btn-green" onclick="sendDataRegister()">Register Agent</button>
+            </form>
+            <div class="toggle-link">
+                Already registered? <span onclick="toggleAuth()">Login Here</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        function toggleAuth() {
+            document.getElementById('login-section').classList.toggle('hidden');
+            document.getElementById('signup-section').classList.toggle('hidden');
+        }
+
+        const passInput = document.getElementById("pass");
+        const passInputl = document.getElementById("passl");
+
+        const togglePass = document.getElementById("togglePass");
+        const togglePass2 = document.getElementById("togglePass2");
+
+
+        togglePass.addEventListener("click", () => {
+            const isPassword = passInput.type === "password";
+            passInput.type = isPassword ? "text" : "password";
+
+            togglePass.classList.toggle("fa-eye");
+            togglePass.classList.toggle("fa-eye-slash");
+        });
+
+        togglePass2.addEventListener("click", () => {
+            const isPassword = passInputl.type === "password";
+            passInputl.type = isPassword ? "text" : "password";
+
+            togglePass.classList.toggle("fa-eye");
+            togglePass.classList.toggle("fa-eye-slash");
+        });
+
+
+        async function sendDataRegister() {
+            // const fname = document.getElementById('fname');
+            const pass = document.getElementById('pass');
+            const em = document.getElementById('em');
+
+
+            // if (!fname.checkValidity()) {
+            //     fname.reportValidity();
+            //     return;
+            // }
+
+            if (!em.checkValidity()) {
+                em.reportValidity();
+                return;
+            }
+            if (!pass.checkValidity()) {
+                pass.reportValidity();
+                return;
+            }
+
+            // console.log(fname.value)
+            console.log(pass.value)
+            console.log(em.value)
+
+            const res = await fetch(`/register_check`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                // body: JSON.stringify({ fname: fname.value, email: em.value, password: pass.value })
+                body: JSON.stringify({ email: em.value, password: pass.value })
+
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('Success', 'User Registered', 'success').then(() => location.reload());
+            }
+            else {
+
+                Swal.fire('Error', data.message, 'error');
+
+            }
+
+
+        }
+
+
+        async function sendDatalogin() {
+
+            const pass = document.getElementById('passl');
+            const em = document.getElementById('eml');
+
+            if (!em.checkValidity()) {
+                em.reportValidity();
+                return;
+            }
+            if (!pass.checkValidity()) {
+                pass.reportValidity();
+                return;
+            }
+
+            console.log(pass.value)
+            console.log(em.value)
+
+            const res = await fetch(`/login_check`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: em.value, password: pass.value })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                window.location.href = data.redirect;
+
+            }
+            else {
+
+                Swal.fire('Error', data.message, 'error');
+
+            }
+
+        }
+
+    </script>
+</body>
+
+</html>

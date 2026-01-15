@@ -1,11 +1,7 @@
 
-// const originalError = console.error;
-
-// console.log = () => {};
-// console.debug = () => {};
-// console.warn = () => {};
-// console.error = originalError;
-
+import session from "express-session";
+import MongoStore from "connect-mongo";
+import bcrypt from "bcrypt";
 import { areJidsSameUser } from '@whiskeysockets/baileys'
 import Redis from 'ioredis';
 import { useRedisAuthStateWithHSet, deleteHSetKeys } from 'baileys-redis-auth';
@@ -110,6 +106,17 @@ const grp_links = mongoose.model(
     "grp_links",
     grp_link
 );
+
+const userSchema = new mongoose.Schema({
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true }
+}, { collection: "registered_admins" });
+
+const reg = mongoose.model(
+
+    "reg",
+    userSchema
+)
 
 const AUTH_DIR = path.join(process.cwd(), 'auth');
 const MESSAGE_FILE = path.join(process.cwd(), 'messages.json');
@@ -561,6 +568,7 @@ async function startWhatsApp() {
 import fsp from 'fs/promises';   // rename to 'fsp'
 import { group, timeStamp } from 'console';
 import { Items } from 'openai/resources/conversations.mjs';
+import { name } from 'ejs';
 
 async function readLastMessage() {
     try {
@@ -608,17 +616,46 @@ app.use(express.static('public')); // For CSS/JS files
 app.use(express.json());
 
 
+app.use(session({
+    secret: 'oas_bott', // A random string to sign the cookie
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: "mongodb://localhost:27017/Whatsapp_Customer_Support_Agent"
+    }),
+    cookie: { maxAge: 1000 * 60 * 60 * 2 } // Cookie expires in 24 hours
+}));
 
-app.get('/configure', async (req, res) => {
+const checkAuth = (req, res, next) => {
+    if (!req.session.userId) {
+        return res.redirect('/auth'); // Not logged in? Go to login page.
+    }
+    next();
+};
+
+app.get('/configure', checkAuth, async (req, res) => {
 
     const not_num = await notifyNumber.distinct("num")
     res.render('configure', { not_num });
 });
 
+
+app.get('/auth', (req, res) => {
+
+
+    res.render('auth');
+});
+
+
+
+
 // Add these to your backend file
 
 // Dashboard Home
-app.get('/dashboard', async (req, res) => {
+
+
+
+app.get('/dashboard', checkAuth, async (req, res) => {
     const needsAttention = await analyzed.find({ attention: false });
 
     // const allGroups = await User.distinct("group_name");
@@ -631,7 +668,7 @@ app.get('/dashboard', async (req, res) => {
 });
 
 // View Chat History for a Group
-app.get('/chat/:groupName', async (req, res) => {
+app.get('/chat/:groupName', checkAuth, async (req, res) => {
 
     try {
 
@@ -653,8 +690,8 @@ app.get('/chat/:groupName', async (req, res) => {
     }
 });
 
-app.get('/', (req, res) => {
-  res.redirect('/dashboard');
+app.get('/', checkAuth, (req, res) => {
+    res.redirect('/dashboard');
 });
 
 
@@ -724,6 +761,85 @@ app.post('/attention-true', async (req, res) => {
     }
 
     res.json({ success: true });
+});
+
+
+app.post('/register_check', async (req, res) => {
+
+    // const { fname, email, password } = req.body
+    const { email, password } = req.body
+
+
+    // let na = fname
+    let em = email
+    let pas = password
+
+    // console.log(na, em, pas)
+    console.log(em, pas)
+
+
+    const che = await reg.findOne({ email: em })
+
+    if (!che) {
+
+        try {
+            const hashedPassword = await bcrypt.hash(pas, 10);
+            const newUser = new reg({
+                email: em,
+                password: hashedPassword // Store the hash, not the plain text
+            });
+            await newUser.save();
+            console.log("Registered")
+            res.json({ success: true })
+
+            // res.redirect('/auth');
+        } catch (err) {
+            console.log("REGISTER ERROR ❌", err);
+            res.json({ success: false, message: err.message || "Error Registering User" });
+        }
+    }
+    else {
+
+        res.json({ success: false, message: "Username already registered" })
+
+    }
+
+
+})
+
+
+app.post('/login_check', async (req, res) => {
+
+    const { email, password } = req.body
+
+
+    let em = email
+    let pas = password
+
+    console.log(em, pas)
+
+    const user = await reg.findOne({ email: em });
+    if (!user) return res.send({ success: false, message: 'User not found' });
+
+    const isMatch = await bcrypt.compare(pas, user.password);
+
+    if (isMatch) {
+        // This line creates the session in MongoDB and the cookie in the browser
+        req.session.userId = user._id;
+        return res.json({ success: true, redirect: "/dashboard" });
+
+    } else {
+        res.send({ success: false, message: 'Invalid password' });
+    }
+
+
+
+})
+
+app.get('/logout_bot', (req, res) => {
+    req.session.destroy(() => {
+        res.redirect('/auth');
+    });
 });
 
 app.post('/set-time', async (req, res) => {
