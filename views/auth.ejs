@@ -139,7 +139,7 @@
             display: none;
         }
 
-        #togglePass,
+    
         #togglePass2 {
             left: auto !important;
             right: 15px !important;
@@ -233,27 +233,27 @@
             document.getElementById('signup-section').classList.toggle('hidden');
         }
 
-        const passInput = document.getElementById("pass");
+        // const passInput = document.getElementById("pass");
         const passInputl = document.getElementById("passl");
 
-        const togglePass = document.getElementById("togglePass");
+        // const togglePass = document.getElementById("togglePass");
         const togglePass2 = document.getElementById("togglePass2");
 
 
-        togglePass.addEventListener("click", () => {
-            const isPassword = passInput.type === "password";
-            passInput.type = isPassword ? "text" : "password";
+        // togglePass.addEventListener("click", () => {
+        //     const isPassword = passInput.type === "password";
+        //     passInput.type = isPassword ? "text" : "password";
 
-            togglePass.classList.toggle("fa-eye");
-            togglePass.classList.toggle("fa-eye-slash");
-        });
+        //     togglePass.classList.toggle("fa-eye");
+        //     togglePass.classList.toggle("fa-eye-slash");
+        // });
 
         togglePass2.addEventListener("click", () => {
             const isPassword = passInputl.type === "password";
             passInputl.type = isPassword ? "text" : "password";
 
-            togglePass.classList.toggle("fa-eye");
-            togglePass.classList.toggle("fa-eye-slash");
+            togglePass2.classList.toggle("fa-eye");
+            togglePass2.classList.toggle("fa-eye-slash");
         });
 
 
