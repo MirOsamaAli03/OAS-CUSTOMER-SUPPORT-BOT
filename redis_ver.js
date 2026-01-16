@@ -108,7 +108,7 @@ const grp_links = mongoose.model(
 );
 
 const userSchema = new mongoose.Schema({
-    email: { type: String, required: true, unique: true },
+    username: { type: String, required: true, unique: true },
     password: { type: String, required: true }
 }, { collection: "registered_admins" });
 
@@ -767,25 +767,25 @@ app.post('/attention-true', async (req, res) => {
 app.post('/register_check', async (req, res) => {
 
     // const { fname, email, password } = req.body
-    const { email, password } = req.body
+    const { username, password } = req.body
 
 
     // let na = fname
-    let em = email
+    let uname = username
     let pas = password
 
     // console.log(na, em, pas)
-    console.log(em, pas)
+    console.log(uname, pas)
 
 
-    const che = await reg.findOne({ email: em })
+    const che = await reg.findOne({ username: uname })
 
     if (!che) {
 
         try {
             const hashedPassword = await bcrypt.hash(pas, 10);
             const newUser = new reg({
-                email: em,
+                username: uname,
                 password: hashedPassword // Store the hash, not the plain text
             });
             await newUser.save();
@@ -810,15 +810,15 @@ app.post('/register_check', async (req, res) => {
 
 app.post('/login_check', async (req, res) => {
 
-    const { email, password } = req.body
+    const { username, password } = req.body
 
 
-    let em = email
+    let uname = username
     let pas = password
 
-    console.log(em, pas)
+    console.log(uname, pas)
 
-    const user = await reg.findOne({ email: em });
+    const user = await reg.findOne({ username: uname });
     if (!user) return res.send({ success: false, message: 'User not found' });
 
     const isMatch = await bcrypt.compare(pas, user.password);
