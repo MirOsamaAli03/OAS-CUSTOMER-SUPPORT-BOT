@@ -348,21 +348,16 @@ const retrival = async (User) => {
 
             console.log(istrue)
 
+            // const cur = Date.now()
+            const pakTime = new Date(Date.now()).toLocaleString("en-PK", {
+                timeZone: "Asia/Karachi",
+            });
+
             if (istrue) {
-                // const cur = Date.now()
-                const pakTime = new Date(Date.now()).toLocaleString("en-PK", {
-                    timeZone: "Asia/Karachi",
-                });
-                try {
-                    await resolved_issue.create({ group_name: an[0].group_name, message: an[0].message_text, BY_AI: true, Remarks: "Issue successfully resolved with AI attention", time_solved: pakTime })
-                }
-                catch {
+                await resolved_issue.create({ group_name: group, message: lastMessage, BY_AI: true, Remarks: "Issue successfully resolved with AI attention", time_solved: pakTime })
 
 
-                }
             }
-
-
 
 
             await analyzed.create({ group_name: group, message_text: lastMessage, attention: istrue, is_notified: false, last_message_time: last10[0].milli_sec })
