@@ -58,7 +58,8 @@ const analyzed = mongoose.model("Analyzed_messages", {
     group_name: String,
     attention: Boolean,
 
-    is_notified: Boolean
+    is_notified: Boolean,
+    last_message_time: Date
 
 })
 
@@ -116,6 +117,22 @@ const reg = mongoose.model(
 
     "reg",
     userSchema
+)
+
+const solved_queries = mongoose.Schema({
+
+    message: String,
+    BY_AI: Boolean,
+    Remarks: String,
+    time_solved: String,
+    group_name: String
+
+})
+
+const resolved_issue = mongoose.model(
+
+    "resolved_issue",
+    solved_queries
 )
 
 const AUTH_DIR = path.join(process.cwd(), 'auth');
@@ -331,10 +348,24 @@ const retrival = async (User) => {
 
             console.log(istrue)
 
+            if (istrue) {
+                // const cur = Date.now()
+                const pakTime = new Date(Date.now()).toLocaleString("en-PK", {
+                    timeZone: "Asia/Karachi",
+                });
+                try {
+                    await resolved_issue.create({ group_name: an[0].group_name, message: an[0].message_text, BY_AI: true, Remarks: "Issue successfully resolved with AI attention", time_solved: pakTime })
+                }
+                catch {
+
+
+                }
+            }
 
 
 
-            await analyzed.create({ group_name: group, message_text: lastMessage, attention: istrue, is_notified: false })
+
+            await analyzed.create({ group_name: group, message_text: lastMessage, attention: istrue, is_notified: false, last_message_time: last10[0].milli_sec })
         }
 
 
@@ -656,15 +687,29 @@ app.get('/auth', (req, res) => {
 
 
 app.get('/dashboard', checkAuth, async (req, res) => {
-    const needsAttention = await analyzed.find({ attention: false });
+    const needsAttention = await analyzed.find({ attention: false }).sort({ last_message_time: -1 });
 
     // const allGroups = await User.distinct("group_name");
 
-    const allGroups = await User.distinct("group_name", {
-        group_name: { $nin: [null, ""] }
-    });
+    // const allGroups = await User.distinct("group_name", {
+    //     group_name: { $nin: [null, ""] }
+    // })
 
-    res.render('index', { needsAttention, allGroups });
+    const allGroups = await User.aggregate([
+        { $match: { group_name: { $nin: [null, ""] } } },
+        { $sort: { milli_sec: -1 } },  // latest message first
+        {
+            $group: {
+                _id: "$group_name",
+                latestMilli: { $first: "$milli_sec" }
+            }
+        },
+        { $sort: { latestMilli: -1 } }  // keep order
+    ]);
+    const groupNames = allGroups.map(g => g._id);
+
+
+    res.render('index', { needsAttention, groupNames });
 });
 
 // View Chat History for a Group
@@ -715,7 +760,8 @@ app.post('/send', async (req, res) => {
         if (!jid.endsWith('@g.us')) {
             const [wa] = await sock.onWhatsApp(jid);
             if (!wa?.exists) {
-                return res.status(404).json({ ok: false, error: 'Number not on WhatsApp' });
+                // return res.status(404).json({ ok: false, error: 'Number not on WhatsApp' });
+                HTMLFormControlsCollection.log("Number Not On Whatsapp")
             }
         }
 
@@ -752,14 +798,19 @@ app.post('/delete-group', async (req, res) => {
 
 
 app.post('/attention-true', async (req, res) => {
-    const { group_name } = req.body;
+    const { group_name, message, remarks } = req.body;
+    // const curr = Date.now()
+    const pakTime = new Date(Date.now()).toLocaleString("en-PK", {
+        timeZone: "Asia/Karachi",
+    });
+    console.log(message)
 
     const doc = await analyzed.findOne({ group_name });
     if (doc) {
         doc.attention = true;
         await doc.save();
     }
-
+    await resolved_issue.create({ group_name: group_name, message: message, BY_AI: false, Remarks: remarks, time_solved: pakTime })
     res.json({ success: true });
 });
 

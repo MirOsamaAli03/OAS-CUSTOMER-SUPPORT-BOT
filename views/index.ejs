@@ -10,7 +10,7 @@
         :root {
             --primary: #075e54;
             --secondary: #25d366;
-            --third: rgb(6, 193, 240); 
+            --third: rgb(6, 193, 240);
             --danger: #ef4444;
             --bg: #f8fafc;
             --text: #1e293b;
@@ -139,7 +139,7 @@
             color: var(--text);
         }
 
-          .con_btn {
+        .con_btn {
             background: var(--secondary);
             color: white;
             padding: 10px 18px;
@@ -154,7 +154,7 @@
             opacity: 0.9;
         }
 
-     
+
 
         .close-btn {
             width: 32px;
@@ -199,10 +199,10 @@
             <span class="count-badge">Live Status</span>
         </header>
         <header>
-                            <a href="/configure" class="con_btn">Configuration</a>
-                            <a href="/logout_bot" class="con_btn">Logout</a>
+            <a href="/configure" class="con_btn">Configuration</a>
+            <a href="/logout_bot" class="con_btn">Logout</a>
 
-                            <!-- <button class="con_btn" onclick="logout()">Logout</button> -->
+            <!-- <button class="con_btn" onclick="logout()">Logout</button> -->
 
 
         </header>
@@ -225,11 +225,18 @@
                     <% needsAttention.forEach(group=> { %>
                         <div class="card alert-card">
                             <div class="card-info">
-                                <button class="close-btn" onclick="send_attention_status('<%= group.group_name %>')">
+                                <!-- <button class="close-btn"
+                                    onclick="send_attention_status('<%= group.group_name %>','<%= JSON.stringify(group.message_text) %>')">
 
                                     X
 
+                                </button> -->
+                                <button class="close-btn" data-group="<%= group.group_name %>"
+                                    data-message="<%= group.message_text %>"
+                                    onclick="send_attention_status(event,this)">
+                                    X
                                 </button>
+
                                 <% if (group.is_one){%>
                                     <h4 style="padding-left: 20px; color: red"> No Attention Since One Hour 🕐 </h4>
                                     <% } else if (group.is_thr){%>
@@ -259,14 +266,14 @@
                 <i class="fas fa-users" style="color: var(--primary)"></i>
                 Monitored Groups
                 <span class="count-badge">
-                    <%= allGroups.length %>
+                    <%= groupNames.length %>
                 </span>
             </div>
             <i class="fas fa-chevron-down chevron" id="chevron2"></i>
         </div>
 
         <div id="allContent" class="content">
-            <% allGroups.forEach(name=> { %>
+            <% groupNames.forEach(name=> { %>
                 <div class="card">
                     <div class="card-info">
                         <h3>
@@ -280,6 +287,8 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         function toggleSection(contentId, chevronId) {
             const content = document.getElementById(contentId);
@@ -288,8 +297,8 @@
             content.classList.toggle('show');
             chevron.classList.toggle('rotate');
         }
-        
-      
+
+
         async function send_del(grp) {
             try {
                 const res = await fetch('/delete-group', {
@@ -312,24 +321,50 @@
             }
         }
 
+        async function send_attention_status(e, btn) {
+            e.preventDefault();
+            e.stopPropagation(); // ✅ stops bubble, popup won't auto-close
 
-        async function send_attention_status(grp) {
+            const grp = btn.dataset.group;
+            const mess = btn.dataset.message;
+
+            const result = await Swal.fire({
+                title: "Enter Remarks",
+                input: "text",
+                inputPlaceholder: "Type here...",
+                showCancelButton: true,
+                confirmButtonText: "Submit",
+                cancelButtonText: "Cancel",
+                allowOutsideClick: false, // optional: prevent accidental closing
+                allowEscapeKey: true
+            });
+
+            // user pressed cancel
+            if (!result.isConfirmed) return;
+
+            const remarks_text = result.value || "";
+
             try {
                 const res = await fetch('/attention-true', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ group_name: grp })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        group_name: grp,
+                        message: mess,
+                        remarks: remarks_text
+                    })
                 });
 
                 const data = await res.json();
 
                 if (data.success) {
-                    location.reload(); // reload AFTER success
+                    location.reload();
+                } else {
+                    Swal.fire("Error", data.message || "Failed", "error");
                 }
             } catch (err) {
                 console.error(err);
+                Swal.fire("Error", "Network error", "error");
             }
         }
 
