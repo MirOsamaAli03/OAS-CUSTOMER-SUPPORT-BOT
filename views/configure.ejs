@@ -1,574 +1,293 @@
-<!-- <!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Set Numbers & Timer</title>
-
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            /* horizontal */
-            align-items: center;
-            /* vertical */
-            height: 100vh;
-            margin: 0;
-        }
-
-        .header {
-            position: sticky;
-            /* stays on top while scrolling */
-            top: 0;
-            z-index: 1000;
-
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-
-            padding: 12px 20px;
-            background: #111;
-            color: white;
-        }
-
-
-        .number_setter {
-
-            background-color: green;
-            color: white;
-
-            padding: 40px;
-            border-radius: 4px;
-            width: 30vw;
-
-            /* margin: 10px; */
-
-
-        }
-
-        .number_setter h3 {
-
-
-            padding: 2px;
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: xx-large;
-            font-weight: 500;
-        }
-
-        .number_setter input {
-
-
-            width: 320px;
-            padding: 12px 14px;
-            font-size: 15px;
-            font-family: system-ui, -apple-system, sans-serif;
-            border-radius: 10px;
-            border: 1.5px solid #d1d5db;
-            background-color: #fff;
-            color: #111827;
-            outline: none;
-            transition: all 0.25s ease;
-
-        }
-
-        .number_setter button {
-
-            width: 100px;
-            padding: 10px;
-            background-color: white;
-            color: #111827;
-            border: 2px solid white;
-            outline: none;
-            border-radius: 10px;
-
-        }
-
-
-        .time_setter {
-
-            background-color: green;
-            color: white;
-
-            padding: 40px;
-            border-radius: 4px;
-            width: 30vw;
-
-            margin: 10px;
-
-
-        }
-
-        .time_setter h3 {
-
-
-            padding: 2px;
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: xx-large;
-            font-weight: 500;
-        }
-
-        .time_setter input {
-
-
-            width: 320px;
-            padding: 12px 14px;
-            font-size: 15px;
-            font-family: system-ui, -apple-system, sans-serif;
-            border-radius: 10px;
-            border: 1.5px solid #d1d5db;
-            background-color: #fff;
-            color: #111827;
-            outline: none;
-            transition: all 0.25s ease;
-
-        }
-
-        .time_setter button {
-
-            width: 100px;
-            padding: 10px;
-            background-color: white;
-            color: #111827;
-            border: 2px solid white;
-            outline: none;
-            border-radius: 10px;
-
-        }
-    </style>
-</head>
-
-<body>
-
-    <header class="header">
-        <a href="/dashboard"> BACK </a>
-    </header>
-
-    <div class="number_setter">
-        <h3>Set Numbers</h3>
-        <input type="text" id="number_input" placeholder="92XXXXXXXXXX" pattern="^92[0-9]{10}$" maxlength="12"
-            inputmode="numeric" required title="Number must start with 92 and contain exactly 12 digits">
-        <button onclick="sendData()">Submit</button>
-
-
-
-    </div>
-    <div class="time_setter">
-
-        <h3>Set New Time Period (seconds)</h3>
-        <input type="number" id="timer_input" placeholder="Enter New Timer" min="1" required>
-        <button onclick="sendNewTime()">Submit</button>
-    </div>
-
-
-    <script>
-        async function sendData() {
-
-            const input = document.getElementById('number_input');
-
-            // 🔴 THIS LINE IS IMPORTANT
-            if (!input.checkValidity()) {
-                input.reportValidity();
-                return;
-            }
-
-            const num = input.value;
-
-            const res = await fetch(`/set-numbers`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ New_number: num })
-            });
-
-            const data = await res.json();
-            if (data.success) location.reload();
-        }
-
-        async function sendNewTime() {
-
-
-            const input = document.getElementById('timer_input');
-
-            // 🔴 THIS LINE IS IMPORTANT
-            if (!input.checkValidity()) {
-                input.reportValidity();
-                return;
-            }
-
-
-            const t = input.value;
-
-            const res = await fetch(`/set-time-for_notify`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ New_time: t })
-            });
-
-            const data = await res.json();
-            if (data.success) location.reload();
-        }
-    </script>
-
-</body>
-
-</html> -->
-
-
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agent Settings</title>
+    <title>OAS | Agent Settings</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --primary: #075e54;
-            --primary-light: #128c7e;
-            --accent: #25d366;
-            --bg: #f0f2f5;
-            --text-dark: #1f2937;
-            --text-light: #6b7280;
-            --warning: red
+            --whatsapp-green: #25d366;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --white: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
         }
 
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: var(--bg);
-            color: var(--text-dark);
             margin: 0;
             display: flex;
-            flex-direction: column;
             min-height: 100vh;
         }
 
-        /* Modern Sticky Header */
-        .header {
-            position: sticky;
-            top: 0;
-            background: #ffffff;
-            padding: 15px 40px;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            z-index: 1000;
-        }
-
-        .header a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: color 0.2s;
-        }
-
-        .header a:hover {
-            color: var(--accent);
-        }
-
-        /* Main Layout */
-        .main-container {
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 40px 20px;
-            gap: 30px;
-            flex-wrap: wrap;
-            /* Responsive for mobile */
-        }
-
-        .settings-card {
-            background: #ffffff;
-            padding: 35px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
-            width: 100%;
-            max-width: 400px;
-            border: 1px solid #e5e7eb;
-            transition: transform 0.3s ease;
-        }
-
-        .settings-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .icon-box {
-            width: 50px;
-            height: 50px;
-            background: var(--bg);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-            color: var(--primary);
-            font-size: 1.5rem;
-        }
-
-        .settings-card h3 {
-            margin: 0 0 10px 0;
-            font-size: 1.25rem;
-            font-weight: 700;
-            color: var(--text-dark);
-        }
-
-        .settings-card p {
-            font-size: 0.9rem;
-            color: var(--text-light);
-            margin-bottom: 25px;
-            line-height: 1.5;
-        }
-
-        /* Input Styling */
-        .input-group {
-            position: relative;
-            margin-bottom: 20px;
-        }
-
-        .input-group input {
-            width: 100%;
-            padding: 14px 16px;
-            font-size: 1rem;
-            border: 2px solid #f3f4f6;
-            border-radius: 12px;
-            box-sizing: border-box;
-            outline: none;
-            transition: all 0.3s ease;
-            background: #f9fafb;
-        }
-
-        .input-group input:focus {
-            border-color: var(--primary-light);
-            background: #fff;
-            box-shadow: 0 0 0 4px rgba(18, 140, 126, 0.1);
-        }
-
-        /* Button Styling */
-        .btn-submit {
-            width: 100%;
-            padding: 14px;
+        /* SIDEBAR (Consistent with Dashboard) */
+        .sidebar {
+            width: 280px;
             background: var(--primary);
             color: white;
-            border: none;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
+            position: fixed;
+            height: 100vh;
+            padding: 30px 20px;
+            z-index: 100;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            padding: 50px;
+            max-width: 1100px;
+        }
+
+        /* UI ENHANCEMENTS */
+        .settings-header {
+            margin-bottom: 40px;
+        }
+
+        .settings-container {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr; /* Unbalanced grid looks more professional */
+            gap: 30px;
+        }
+
+        /* THE ADD/UPDATE CARD */
+        .management-card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 40px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+        }
+
+        .section-label {
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 10px;
-            margin-bottom: 10px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+            color: var(--primary);
         }
 
-        .btn-submit:hover {
-            background: var(--primary-light);
-            box-shadow: 0 4px 12px rgba(18, 140, 126, 0.2);
+        .input-wrapper {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
         }
 
-        .btn-submit:active {
-            transform: scale(0.98);
+        .input-wrapper:focus-within {
+            background: #fff;
+            border-color: var(--whatsapp-green);
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.1);
         }
 
-        .btn-submit-d {
+        .input-wrapper label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper input {
             width: 100%;
-            padding: 14px;
-            background: var(--warning);
-            color: white;
             border: none;
-            border-radius: 12px;
-            font-size: 1rem;
+            background: transparent;
+            font-size: 1.1rem;
             font-weight: 600;
+            color: var(--text-main);
+            outline: none;
+        }
+
+        /* ACTIVE LIST / DELETE AREA */
+        .active-list-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 30px;
+            border: 1px solid var(--border);
+        }
+
+        .number-tag {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            transition: 0.2s;
+        }
+
+        .number-tag:hover {
+            border-color: var(--danger);
+            background: #fff1f2;
+        }
+
+        .del-btn-small {
+            background: none;
+            border: none;
+            color: var(--text-muted);
             cursor: pointer;
-            transition: all 0.3s ease;
+            padding: 5px;
+            transition: 0.2s;
+        }
+
+        .del-btn-small:hover { color: var(--danger); }
+
+        .btn-main {
+            width: 100%;
+            padding: 18px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
+            transition: 0.3s;
+            margin-top: 10px;
         }
 
-        .btn-submit-d:hover {
-            background: var(--primary-light);
-            box-shadow: 0 4px 12px rgba(18, 140, 126, 0.2);
-        }
+        .btn-save { background: var(--primary); color: white; box-shadow: 0 4px 14px rgba(7, 94, 84, 0.3); }
+        .btn-save:hover { background: var(--whatsapp-green); transform: translateY(-2px); }
 
-        .btn-submit-d:active {
-            transform: scale(0.98);
-        }
-
-        @media (max-width: 768px) {
-            .main-container {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .settings-card {
-                max-width: 100%;
-            }
+        /* Responsive */
+        @media (max-width: 1000px) {
+            .settings-container { grid-template-columns: 1fr; }
+            .sidebar { width: 80px; }
+            .sidebar span { display: none; }
+            .main-content { margin-left: 80px; padding: 30px; }
         }
     </style>
 </head>
-
 <body>
 
-    <header class="header">
-        <a href="/dashboard">
-            <i class="fas fa-chevron-left"></i>
-            Return to Dashboard
+    <nav class="sidebar">
+        <div style="font-size: 1.5rem; font-weight: 800; margin-bottom: 50px;">
+            <i class="fab fa-whatsapp"></i> <span>  OAS Support</span>
+        </div>
+        <a href="/dashboard" style="color:rgba(255,255,255,0.6); text-decoration:none; display:block; margin-bottom: 25px; font-weight:600;">
+            <i class="fas fa-th-large" style="margin-right:15px;"></i> <span>Dashboard</span>
         </a>
-    </header>
+        <a href="/configure" style="color:white; text-decoration:none; display:block; font-weight:600;">
+            <i class="fas fa-sliders-h" style="margin-right:15px;"></i> <span>Configuration</span>
+        </a>
+    </nav>
 
-    <div class="main-container">
-
-        <div class="settings-card">
-            <div class="icon-box">
-                <i class="fas fa-phone-alt"></i>
-            </div>
-            <h3>Support Numbers</h3>
-            <p>Add and delete official support numbers to distinguish them from customers in the chat logs.</p>
-
-            <div class="input-group">
-                <input list="numbers" type="text" id="number_input" placeholder="923XXXXXXXXX" pattern="^92[0-9]{10}$"
-                    maxlength="12" inputmode="numeric" required>
-
-                <datalist id="numbers">
-
-                    <% not_num.forEach(n=> {%>
-
-
-                        <option value="<%= n %>"></option>
-
-
-
-
-                        <% })%>
-
-                </datalist>
-
-
-            </div>
-
-
-            <button class="btn-submit" onclick="sendData()">
-                Update Numbers <i class="fas fa-save"></i>
-            </button>
-
-            <div class="input-group">
-                <input list="del_numbers" type="text" id="delete_input" placeholder="923XXXXXXXXX"
-                    pattern="^92[0-9]{10}$" maxlength="12" inputmode="numeric" required>
-
-
-                <datalist id="del_numbers">
-
-                    <% not_num.forEach(n=> {%>
-
-
-                        <option value="<%= n %>"></option>
-
-
-
-
-                        <% })%>
-
-                </datalist>
-            </div>
-
-            <button class="btn-submit-d" onclick="delData()">
-                Delete Numbers <i class="fas fa-trash"></i>
-            </button>
+    <main class="main-content">
+        <div class="settings-header">
+            <h1 style="font-weight: 800; font-size: 2.2rem; color: var(--text-main); margin:0;">Configuration</h1>
+            <p style="color: var(--text-muted); margin-top: 8px;">Control support accessibility and response intervals.</p>
         </div>
 
-        <div class="settings-card">
-            <div class="icon-box">
-                <i class="fas fa-clock"></i>
-            </div>
-            <h3>Notification Interval</h3>
-            <p>Set how often the system checks for unattended groups (measured in seconds).</p>
+        <div class="settings-container">
+            <div class="management-card">
+                <div class="section-label">
+                    <i class="fas fa-user-plus"></i> Add or Update Agent
+                </div>
 
-            <div class="input-group">
-                <input type="number" id="timer_input" placeholder="e.g. 30" min="1" required>
+                <div class="input-wrapper">
+                    <label>Agent WhatsApp Number</label>
+                    <input list="numbers" type="text" id="number_input" placeholder="923000000000" pattern="^92[0-9]{10}$" maxlength="12">
+                </div>
+
+                <div class="input-wrapper">
+                    <label>Inactivity Alert Threshold (Seconds)</label>
+                    <input type="number" id="timer_input" placeholder="1800">
+                </div>
+
+                <button class="btn-main btn-save" onclick="sendData()">
+                    Sync Configuration <i class="fas fa-sync-alt"></i>
+                </button>
             </div>
 
-            <button class="btn-submit" onclick="sendNewTime()">
-                Save Timer <i class="fas fa-history"></i>
-            </button>
+            <div class="active-list-card">
+                <div class="section-label" style="color: var(--text-main);">
+                    <i class="fas fa-list-ul"></i> Active Numbers
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">Click the trash icon to remove an agent.</p>
+                
+                <div id="numberList">
+                    <% not_num.forEach(n => { %>
+                        <div class="number-tag">
+                            <span style="font-weight: 600; color: var(--primary);">+<%= n %></span>
+                            <button class="del-btn-small" onclick="quickDelete('<%= n %>')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    <% }) %>
+                </div>
+
+                <% if(not_num.length === 0) { %>
+                    <div style="text-align:center; padding: 20px; color: var(--text-muted); border: 2px dashed var(--border); border-radius: 12px;">
+                        No active numbers
+                    </div>
+                <% } %>
+            </div>
         </div>
-
-    </div>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         async function sendData() {
-            const input = document.getElementById('number_input');
-            if (!input.checkValidity()) {
-                input.reportValidity();
+            const num = document.getElementById('number_input').value;
+            const time = document.getElementById('timer_input').value;
+
+            if(!num || !time) {
+                Swal.fire('Error', 'Please fill all fields', 'error');
                 return;
             }
+
+            Swal.fire({ title: 'Processing...', didOpen: () => Swal.showLoading() });
 
             const res = await fetch(`/set-numbers`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ New_number: input.value })
+                body: JSON.stringify({ New_number: num, New_time: time })
             });
 
             const data = await res.json();
             if (data.success) {
-                Swal.fire('Success', 'Support number added!', 'success').then(() => location.reload());
+                Swal.fire('Updated!', 'Agent configuration saved.', 'success').then(() => location.reload());
             }
-
         }
 
-        async function delData() {
-            const input = document.getElementById('delete_input');
-            if (!input.checkValidity()) {
-                input.reportValidity();
-                return;
-            }
-
-            const res = await fetch(`/del-numbers`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ del_number: input.value })
+        async function quickDelete(val) {
+            const confirm = await Swal.fire({
+                title: 'Remove Agent?',
+                text: `Number ${val} will no longer be monitored.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Yes, remove'
             });
 
-            const data = await res.json();
-            if (data.success) {
-                Swal.fire('Success', 'Support number deleted!', 'success').then(() => location.reload());
-            }
-            else {
-
-                Swal.fire('Error', 'Support number not found!', 'error');
-
-            }
-
-        }
-
-
-        async function sendNewTime() {
-            const input = document.getElementById('timer_input');
-            if (!input.checkValidity()) {
-                input.reportValidity();
-                return;
-            }
-
-            const res = await fetch(`/set-time-for_notify`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ New_time: input.value })
-            });
-
-            const data = await res.json();
-            if (data.success) {
-                Swal.fire('Updated', 'Check interval updated successfully!', 'success').then(() => location.reload());
+            if (confirm.isConfirmed) {
+                const res = await fetch(`/del-numbers`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ del_number: val })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    Swal.fire('Deleted', 'Number removed.', 'success').then(() => location.reload());
+                }
             }
         }
     </script>
 </body>
-
 </html>

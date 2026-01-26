@@ -59,7 +59,9 @@ const analyzed = mongoose.model("Analyzed_messages", {
     attention: Boolean,
 
     is_notified: Boolean,
-    last_message_time: Date
+    last_message_time: Date,
+    notify_n: { type: [String], default: [] },
+    last_message_text: String
 
 })
 
@@ -79,7 +81,9 @@ const SupportNumber = mongoose.model(
 const notifyNumberSchema = new mongoose.Schema(
     {
 
-        num: String
+        num: String,
+        time_to_notify: Number,
+        is_true: Boolean
 
     },
     { collection: "notify_numbers" } // 👈 IMPORTANT
@@ -135,6 +139,21 @@ const resolved_issue = mongoose.model(
     solved_queries
 )
 
+const query_remarks = mongoose.Schema({
+
+    message: String,
+    Remarks: String,
+    time_of_remarks: String,
+    group_name: String
+
+})
+
+const remarks_query = mongoose.model(
+
+    "remarks_query",
+    query_remarks
+)
+
 const AUTH_DIR = path.join(process.cwd(), 'auth');
 const MESSAGE_FILE = path.join(process.cwd(), 'messages.json');
 
@@ -184,10 +203,25 @@ let notify_time = 30 * 60 * 1000
 
 let notify_nums = []
 
+let current_send = []
+
 const retrival = async (User) => {
 
+    current_send.length = 0
 
-    let not_num = await notifyNumber.distinct('num')
+    // let not_num = await notifyNumber.distinct('num')
+
+    let not_num = await notifyNumber.aggregate([
+        {
+            $group: {
+                _id: "$num",          // distinct by num
+                doc: { $first: "$$ROOT" } // keep full document
+            }
+        },
+        {
+            $replaceRoot: { newRoot: "$doc" }
+        }
+    ]);
     console.log(not_num)
 
     const numbers = await SupportNumber.find();
@@ -208,6 +242,8 @@ const retrival = async (User) => {
         console.log("Total messages:", last10.length)
         console.log(last10[0].milli_sec)
         console.log(Date.now())
+        console.log(Date.now() - last10[0].milli_sec)
+        console.log(notify_time)
         // const person_num=last10[0].person_num
         let is_analyzed = false
 
@@ -251,7 +287,7 @@ const retrival = async (User) => {
         const an = await analyzed.find({ group_name: group, message_text: lastMessage })
 
         if (an.length > 0) {
-            console.log(an)
+            // console.log(an)
             console.log(an.length)
 
 
@@ -261,58 +297,94 @@ const retrival = async (User) => {
                 const now = Date.now()
 
 
-                if (now - lastTime >= notify_time) {
+                if (!an[0].is_notified) {
 
-                    console.log(notify_time, " is exceeded\n")
-                    if (!an[0].is_notified) {
+                    let notify_sent = false
 
-                        if (not_num.length > 0) {
-                            for (const n of not_num) {
-                                console.log(`Sending Notification to ${n}\n`)
-                                const response = await axios.post(
-                                    "http://localhost:5700/send",
-                                    {
-                                        to: `${n}`,
-                                        text: `Group needs your attention\nGroup Name: ${group}}`,
-                                    },
-                                    {
-                                        headers: {
-                                            "Content-Type": "application/json",
+                    if (not_num.length > 0) {
+
+
+
+                        for (const n of not_num) {
+
+
+
+
+                            console.log("Notification needs to be send")
+                            console.log(n.time_to_notify)
+
+                            if (now - lastTime >= n.time_to_notify) {
+
+
+
+                                if (!an[0].notify_n.includes(n.num)) {
+
+                                    notify_sent = false
+
+                                    console.log(`Sending Notification to ${n.num}\n`)
+                                    let text_to_show = `to ${n.num} for group ${group}`
+                                    current_send.push(text_to_show)
+                                    const response = await axios.post(
+                                        "http://localhost:5700/send",
+                                        {
+                                            to: `${n.num}`,
+                                            text: `Group needs your attention\nGroup Name: ${group}}`,
                                         },
-                                    }
-                                )
-                            }
-                        }
-                        else {
+                                        {
+                                            headers: {
+                                                "Content-Type": "application/json",
+                                            },
+                                        }
+                                    )
 
-                            console.log(`Sending Notification to Osama\n`)
-
-                            const response = await axios.post(
-                                "http://localhost:5700/send",
-                                {
-                                    to: `${fif_min_num}`,
-                                    text: `Group needs your attention\nGroup Name: ${group}}`,
-                                },
-                                {
-                                    headers: {
-                                        "Content-Type": "application/json",
-                                    },
+                                    await analyzed.updateOne(
+                                        { _id: an[0]._id },  // Select the first document by its _id
+                                        { $push: { notify_n: n.num } }  // Push the group name to notify_grps
+                                    );
                                 }
-                            )
 
 
 
+
+
+
+                            }
 
                         }
-                        an[0].is_notified = true
-                        an[0].save()
                     }
                     else {
 
+                        console.log(`Sending Notification to Osama\n`)
 
-                        console.log("Message Already Sent!!\n")
+                        const response = await axios.post(
+                            "http://localhost:5700/send",
+                            {
+                                to: `${fif_min_num}`,
+                                text: `Group needs your attention\nGroup Name: ${group}}`,
+                            },
+                            {
+                                headers: {
+                                    "Content-Type": "application/json",
+                                },
+                            }
+                        )
+
+
+                        notify_sent = true
+
+                    }
+                    if ((an[0].notify_n.length === not_num.length) || notify_sent) {
+                        an[0].is_notified = true
+                        an[0].notify_n=[]
+                        an[0].save()
                     }
                 }
+                else {
+
+
+                    console.log("Message Already Sent to all notify parties!!\n")
+                }
+
 
             }
 
@@ -360,7 +432,7 @@ const retrival = async (User) => {
             }
 
 
-            await analyzed.create({ group_name: group, message_text: lastMessage, attention: istrue, is_notified: false, last_message_time: last10[0].milli_sec })
+            await analyzed.create({ group_name: group, message_text: lastMessage, attention: istrue, is_notified: false, last_message_time: last10[0].milli_sec, notify_n: [], last_message_text: last10[0].message_text })
         }
 
 
@@ -371,7 +443,7 @@ const retrival = async (User) => {
 
 let checkerStarted = false;
 
-let timer = 120
+let timer = 30
 let checkerInterval = null
 
 // function startReplyChecker() {
@@ -432,6 +504,11 @@ async function startWhatsApp() {
         if (connection === 'open') {
             isConnected = true;
             console.log('✅ WhatsApp connected');
+
+            setInterval(() => {
+                sock.sendPresenceUpdate('available')
+            }, 25_000)
+
             readLastMessage();
             startReplyChecker()
 
@@ -696,15 +773,26 @@ app.get('/dashboard', checkAuth, async (req, res) => {
         {
             $group: {
                 _id: "$group_name",
-                latestMilli: { $first: "$milli_sec" }
+                latestMilli: { $first: "$milli_sec" },
+                latestTimestamp: { $first: "$timestamp" }   // ✅ add this
+
             }
         },
         { $sort: { latestMilli: -1 } }  // keep order
     ]);
-    const groupNames = allGroups.map(g => g._id);
+
+    // const groupNames = allGroups.map(g => g._id);
+    const groups = allGroups.map(g => ({
+        groupName: g._id,
+        timestamp: g.latestTimestamp,
+        milli_sec: g.latestMilli
+    }));
 
 
-    res.render('index', { needsAttention, groupNames });
+    // console.log(milliseconds);
+    console.log('render index → current_send:', current_send)
+
+    res.render('index', { needsAttention, groups, current_send });
 });
 
 // View Chat History for a Group
@@ -810,6 +898,18 @@ app.post('/attention-true', async (req, res) => {
 });
 
 
+app.post('/add_remarks', async (req, res) => {
+    const { group_name, message, remarks } = req.body;
+    // const curr = Date.now()
+    const pakTime = new Date(Date.now()).toLocaleString("en-PK", {
+        timeZone: "Asia/Karachi",
+    });
+    console.log(message)
+
+    await remarks_query.create({ group_name: group_name, message: message, Remarks: remarks, time_of_remarks: pakTime })
+    res.json({ success: true });
+});
+
 app.post('/register_check', async (req, res) => {
 
     // const { fname, email, password } = req.body
@@ -911,14 +1011,15 @@ app.post('/set-time-for_notify', async (req, res) => {
 
 
 app.post('/set-numbers', async (req, res) => {
-    const { New_number } = req.body;
+    const { New_number, New_time } = req.body;
 
     let num = New_number
-    // notify_nums.push(num)
+    let notify_time = Number(New_time)
+    notify_time = notify_time * 60 * 1000    // notify_nums.push(num)
 
     // console.log(notify_nums)
 
-    await notifyNumber.create({ num: num })
+    await notifyNumber.create({ num: num, time_to_notify: notify_time, is_true: false })
     let not_num = await notifyNumber.distinct('num')
     console.log(not_num)
     res.json({ success: true });
@@ -928,21 +1029,6 @@ app.post('/del-numbers', async (req, res) => {
     const { del_number } = req.body;
 
     let num = del_number
-    // if (!notify_nums.includes(num)) {
-    //     res.json({ success: false })
-
-
-    // }
-    // else {
-    //     notify_nums = notify_nums.filter(item => item != num)
-
-    //     console.log(notify_nums)
-    //     // await notifyNumber.deleteMany({num:num})
-
-
-    //     res.json({ success: true });
-
-    // }
 
     const exists = await notifyNumber.exists({ num: num });
 
