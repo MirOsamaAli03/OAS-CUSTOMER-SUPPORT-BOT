@@ -442,7 +442,7 @@ const retrival = async (User) => {
 
 let checkerStarted = false;
 
-let timer = 30
+let timer = 120
 let checkerInterval = null
 
 // function startReplyChecker() {
