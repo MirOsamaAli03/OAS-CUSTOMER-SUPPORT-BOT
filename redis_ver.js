@@ -82,8 +82,7 @@ const notifyNumberSchema = new mongoose.Schema(
     {
 
         num: String,
-        time_to_notify: Number,
-        is_true: Boolean
+        time_to_notify: Number
 
     },
     { collection: "notify_numbers" } // 👈 IMPORTANT
@@ -1019,7 +1018,7 @@ app.post('/set-numbers', async (req, res) => {
 
     // console.log(notify_nums)
 
-    await notifyNumber.create({ num: num, time_to_notify: notify_time, is_true: false })
+    await notifyNumber.create({ num: num, time_to_notify: notify_time })
     let not_num = await notifyNumber.distinct('num')
     console.log(not_num)
     res.json({ success: true });
