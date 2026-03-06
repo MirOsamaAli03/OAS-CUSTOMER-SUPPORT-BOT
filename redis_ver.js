@@ -35,6 +35,7 @@ let sock = null;
 let isConnected = false;
 
 import mongoose from "mongoose"
+const { Schema } = mongoose
 
 // const mongoose = require("mongoose")
 
@@ -65,6 +66,47 @@ const analyzed = mongoose.model("Analyzed_messages", {
 
 })
 
+const analyzed_admin = mongoose.model("Analyzed_messages_admins", {
+
+    message_text: String,
+    group_name: String,
+    attention: Boolean,
+
+    is_notified: Boolean,
+    last_message_time: Date,
+    notify_n: { type: [String], default: [] },
+    last_message_text: String
+
+})
+
+
+const teamsSchema = new mongoose.Schema(
+
+    {
+        team_name: String,
+        groups: { type: [String], default: [] },
+        // agent_info: { type: Map, of: String, default: {} }
+        agent_info: {
+            type: Map,
+            of: new Schema({
+                role: String,
+                number: String
+            }, { _id: false }),
+            default: {}
+        }
+
+
+
+    },
+    { collection: "Teams_info" }
+
+)
+
+const teams = mongoose.model(
+    "teams",
+    teamsSchema
+)
+
 const supportNumberSchema = new mongoose.Schema(
     {
         num: String,
@@ -78,11 +120,51 @@ const SupportNumber = mongoose.model(
     supportNumberSchema
 );
 
+const dummyNumbersSchema = new mongoose.Schema(
+    {
+        num: String,
+        name: String
+
+    },
+    { collection: "dummy_numbers" } // 👈 IMPORTANT
+);
+
+const dummyNumber = mongoose.model(
+    "dummyNumber",
+    dummyNumbersSchema
+);
+
+const teamMemberRegisterSchema = new mongoose.Schema(
+
+    {
+        username: String,
+        number: String,
+        password: String,
+        role: String,
+        team_name: String,
+        groups: { type: [String], default: [] },
+        numbers: { type: [String], default: [] },
+        names: { type: [String], default: [] }
+
+
+    },
+    { collection: "user_registration" }
+
+)
+const teamMembers = mongoose.model(
+
+    "teamMembers",
+    teamMemberRegisterSchema
+);
+
 const notifyNumberSchema = new mongoose.Schema(
     {
 
         num: String,
-        time_to_notify: Number
+        time_to_notify: Number,
+        name: String,
+        team: String,
+        groups: { type: [String], default: [] }
 
     },
     { collection: "notify_numbers" } // 👈 IMPORTANT
@@ -91,6 +173,21 @@ const notifyNumberSchema = new mongoose.Schema(
 const notifyNumber = mongoose.model(
     "notifyNumber",
     notifyNumberSchema
+);
+
+const notifyNumberSchemaAdmin = new mongoose.Schema(
+    {
+
+        num: String,
+        time_to_notify: Number
+
+    },
+    { collection: "notify_numbers_admins" } // 👈 IMPORTANT
+);
+
+const notifyNumberAdmin = mongoose.model(
+    "notifyNumberAdmin",
+    notifyNumberSchemaAdmin
 );
 
 
@@ -112,7 +209,7 @@ const grp_links = mongoose.model(
 );
 
 const userSchema = new mongoose.Schema({
-    username: { type: String, required: true, unique: true },
+    usernum: { type: String, required: true, unique: true },
     password: { type: String, required: true }
 }, { collection: "registered_admins" });
 
@@ -201,6 +298,239 @@ let one_hour_num = "14696939509"
 let notify_time = 30 * 60 * 1000
 
 let notify_nums = []
+
+
+
+
+let current_send_admin = []
+
+
+const retrivalAdmin = async (User) => {
+
+    current_send_admin.length = 0
+
+    // let not_num = await notifyNumber.distinct('num')
+
+    let not_num = await notifyNumberAdmin.aggregate([
+        {
+            $group: {
+                _id: "$num",          // distinct by num
+                doc: { $first: "$$ROOT" } // keep full document
+            }
+        },
+        {
+            $replaceRoot: { newRoot: "$doc" }
+        }
+    ]);
+    console.log(not_num)
+
+    const numbers = await SupportNumber.find();
+    console.log(numbers[0].num);
+
+    const uniqueGroups = await User.distinct("group_name")
+    console.log(uniqueGroups)
+
+    for (const group of uniqueGroups) {
+        if (!group) continue;
+
+
+
+        const last10 = await User.find({ group_name: group })
+            .sort({ milli_sec: -1 })
+            .limit(5)
+
+        console.log("Total messages:", last10.length)
+        console.log(last10[0].milli_sec)
+        console.log(Date.now())
+        console.log(Date.now() - last10[0].milli_sec)
+        console.log(notify_time)
+        // const person_num=last10[0].person_num
+        let is_analyzed = false
+
+
+
+
+
+
+
+        let lastMessage = "";
+
+        for (let i = last10.length - 1; i >= 0; i--) {
+
+            let is_support = false
+
+            for (const number of numbers) {
+                if ((last10[i].person_num || 0).toString() == number.num) {
+
+                    lastMessage += "Support: "
+                    is_support = true
+                    break
+                }
+
+            }
+            if (!is_support) {
+
+                lastMessage += "Customer: "
+
+            }
+
+            lastMessage += `"${last10[i].message_text}."`
+
+            // person_num.push(last10[i].person_num)
+
+
+            lastMessage += "\n"
+        }
+
+
+
+        const an = await analyzed_admin.find({ group_name: group, message_text: lastMessage })
+
+        if (an.length > 0) {
+            // console.log(an)
+            console.log(an.length)
+
+
+            if (!an[0].attention) {
+
+                const lastTime = last10[0].milli_sec
+                const now = Date.now()
+
+
+                if (!an[0].is_notified) {
+
+                    let notify_sent = false
+
+                    if (not_num.length > 0) {
+
+
+
+                        for (const n of not_num) {
+
+
+
+
+                            console.log("Notification needs to be send")
+                            console.log(n.time_to_notify)
+
+                            if (now - lastTime >= n.time_to_notify) {
+
+
+
+                                if (!an[0].notify_n.includes(n.num)) {
+
+                                    notify_sent = false
+
+                                    console.log(`Sending Notification to ${n.num}\n`)
+                                    let text_to_show = `to ${n.num} for group ${group}`
+                                    current_send_admin.push(text_to_show)
+                                    const response = await axios.post(
+                                        "http://localhost:5700/send",
+                                        {
+                                            to: `${n.num}`,
+                                            text: `Group needs your attention\nGroup Name: ${group}}`,
+                                        },
+                                        {
+                                            headers: {
+                                                "Content-Type": "application/json",
+                                            },
+                                        }
+                                    )
+
+                                    await analyzed_admin.updateOne(
+                                        { _id: an[0]._id },  // Select the first document by its _id
+                                        { $push: { notify_n: n.num } }  // Push the group name to notify_grps
+                                    );
+                                }
+
+
+
+
+
+
+                            }
+
+                        }
+                    }
+                    else {
+
+                        console.log(`Sending Notification to Osama\n`)
+
+                        // const response = await axios.post(
+                        //     "http://localhost:5700/send",
+                        //     {
+                        //         to: `${fif_min_num}`,
+                        //         text: `Group needs your attention\nGroup Name: ${group}}`,
+                        //     },
+                        //     {
+                        //         headers: {
+                        //             "Content-Type": "application/json",
+                        //         },
+                        //     }
+                        // )
+
+
+                        notify_sent = true
+
+                    }
+                    if ((an[0].notify_n.length === not_num.length) || notify_sent) {
+                        an[0].is_notified = true
+                        an[0].notify_n = []
+                        an[0].save()
+                    }
+                }
+                else {
+
+
+                    console.log("Message Already Sent to all notify parties!!\n")
+                }
+
+
+            }
+
+
+            is_analyzed = true
+        }
+        else {
+            const hasDocs = await analyzed_admin.exists({});
+
+            if (hasDocs) {
+                console.log("Collection is NOT empty");
+                await analyzed_admin.deleteMany({ group_name: group });
+            } else {
+                console.log("Collection is EMPTY");
+            }
+
+
+            const reply = await askGPT(lastMessage);
+            console.log(reply)
+            const istrue = reply.toLowerCase().includes('yes')
+
+            console.log(istrue)
+
+            // const cur = Date.now()
+            const pakTime = new Date(Date.now()).toLocaleString("en-PK", {
+                timeZone: "Asia/Karachi",
+            });
+
+            if (istrue) {
+                await resolved_issue.create({ group_name: group, message: lastMessage, BY_AI: true, Remarks: "Issue successfully resolved with AI attention", time_solved: pakTime })
+
+
+            }
+
+
+            await analyzed_admin.create({ group_name: group, message_text: lastMessage, attention: istrue, is_notified: false, last_message_time: last10[0].milli_sec, notify_n: [], last_message_text: last10[0].message_text })
+        }
+
+
+
+    }
+}
+
+
+
+
 
 let current_send = []
 
@@ -316,18 +646,22 @@ const retrival = async (User) => {
 
 
 
-                                if (!an[0].notify_n.includes(n.num)) {
+                                if (!an[0].notify_n.includes(n.num) && n.groups.includes(group)) {
 
                                     notify_sent = false
 
                                     console.log(`Sending Notification to ${n.num}\n`)
                                     let text_to_show = `to ${n.num} for group ${group}`
                                     current_send.push(text_to_show)
+                                    console.log(n.num)
+                                    console.log(n.name)
+                                    console.log(group)
+
                                     const response = await axios.post(
                                         "http://localhost:5700/send",
                                         {
                                             to: `${n.num}`,
-                                            text: `Group needs your attention\nGroup Name: ${group}}`,
+                                            text: `Group needs your attention ${n.name}\nGroup Name: ${group}\n Team Name: ${n.team}`,
                                         },
                                         {
                                             headers: {
@@ -338,7 +672,7 @@ const retrival = async (User) => {
 
                                     await analyzed.updateOne(
                                         { _id: an[0]._id },  // Select the first document by its _id
-                                        { $push: { notify_n: n.num } }  // Push the group name to notify_grps
+                                        { $push: { notify_n: n.num } }
                                     );
                                 }
 
@@ -355,28 +689,65 @@ const retrival = async (User) => {
 
                         console.log(`Sending Notification to Osama\n`)
 
-                        const response = await axios.post(
-                            "http://localhost:5700/send",
-                            {
-                                to: `${fif_min_num}`,
-                                text: `Group needs your attention\nGroup Name: ${group}}`,
-                            },
-                            {
-                                headers: {
-                                    "Content-Type": "application/json",
-                                },
-                            }
-                        )
+                        // const response = await axios.post(
+                        //     "http://localhost:5700/send",
+                        //     {
+                        //         to: `${fif_min_num}`,
+                        //         text: `Group needs your attention\nGroup Name: ${group}}`,
+                        //     },
+                        //     {
+                        //         headers: {
+                        //             "Content-Type": "application/json",
+                        //         },
+                        //     }
+                        // )
 
 
                         notify_sent = true
 
                     }
-                    if ((an[0].notify_n.length === not_num.length) || notify_sent) {
-                        an[0].is_notified = true
-                        an[0].notify_n=[]
-                        an[0].save()
+
+                    const grp_specific_num = await notifyNumber.find({
+                        groups: group
+                    });
+
+                    if (grp_specific_num.length > 0) {
+                        let num_available = 0;
+
+                        const notifyList = new Set(an?.[0]?.notify_n || []); // safe + fast lookup
+
+                        for (const grp of grp_specific_num) {
+                            if (notifyList.has(grp.num)) {
+                                num_available++;
+                            }
+                        }
+
+                        if (notifyList.size === num_available || notify_sent) {
+                            console.log("All notified for group:", group);
+                            an[0].is_notified = true
+                            an[0].notify_n = []
+                            an[0].markModified('notify_n'); // ensure mongoose tracks array change
+
+                            await an[0].save()
+                        }
                     }
+                    // else if(notify_sent){
+
+                    //     console.log("All notified for group:", group);
+                    //         an[0].is_notified = true
+                    //         an[0].notify_n = []
+                    //         an[0].markModified('notify_n'); // ensure mongoose tracks array change
+
+                    //         await an[0].save()
+
+
+                    // }
+
+                    // if ((an[0].notify_n.length === not_num.length) || notify_sent) {
+                    //     an[0].is_notified = true
+                    //     an[0].notify_n = []
+                    //     an[0].save()
+                    // }
                 }
                 else {
 
@@ -430,8 +801,28 @@ const retrival = async (User) => {
 
             }
 
+            let is_support_a = false
+            let lastMessage_a = ""
 
-            await analyzed.create({ group_name: group, message_text: lastMessage, attention: istrue, is_notified: false, last_message_time: last10[0].milli_sec, notify_n: [], last_message_text: last10[0].message_text })
+            for (const number of numbers) {
+                if ((last10[0].person_num || 0).toString() == number.num) {
+
+                    lastMessage_a += "Support: "
+                    is_support_a = true
+                    break
+                }
+
+            }
+            if (!is_support_a) {
+
+                lastMessage_a += "Customer: "
+
+            }
+
+            lastMessage_a += `"${last10[0].message_text}."`
+
+
+            await analyzed.create({ group_name: group, message_text: lastMessage, attention: istrue, is_notified: false, last_message_time: last10[0].milli_sec, notify_n: [], last_message_text: lastMessage_a })
         }
 
 
@@ -439,11 +830,6 @@ const retrival = async (User) => {
     }
 }
 
-
-let checkerStarted = false;
-
-let timer = 120
-let checkerInterval = null
 
 // function startReplyChecker() {
 //     if (checkerInterval) {
@@ -457,6 +843,11 @@ let checkerInterval = null
 //     }, timer * 1000);
 // }
 
+let checkerStarted = false;
+
+let timer = 120
+let checkerInterval = null
+
 
 function startReplyChecker() {
     if (checkerStarted) return;
@@ -466,6 +857,19 @@ function startReplyChecker() {
     setInterval(() => retrival(User), timer * 1000);
 }
 
+let checkerStartedAdmin = false;
+
+let timerAdmin = 150
+let checkerIntervalAdmin = null
+
+
+function startReplyCheckerAdmin() {
+    if (checkerStartedAdmin) return;
+    checkerStartedAdmin = true;
+
+    console.log('🕒 Reply checker started');
+    setInterval(() => retrivalAdmin(User), timerAdmin * 1000);
+}
 
 
 // --------------------
@@ -510,6 +914,7 @@ async function startWhatsApp() {
 
             readLastMessage();
             startReplyChecker()
+            startReplyCheckerAdmin();
 
         }
 
@@ -671,6 +1076,7 @@ import fsp from 'fs/promises';   // rename to 'fsp'
 import { group, timeStamp } from 'console';
 import { Items } from 'openai/resources/conversations.mjs';
 import { name } from 'ejs';
+import { json } from "stream/consumers";
 
 async function readLastMessage() {
     try {
@@ -735,10 +1141,179 @@ const checkAuth = (req, res, next) => {
     next();
 };
 
+app.get('/configure_admin', checkAuth, async (req, res) => {
+
+    // const not_num = await notifyNumber.distinct("num")
+
+    const role = decodeURIComponent(req.query.role).trim();
+
+    const team = decodeURIComponent(req.query.team).trim();
+
+    // const team_groups = req.query.groups
+    //     ? decodeURIComponent(req.query.groups).split(',').map(g => g.trim())
+    //     : [];
+
+    const team_groups = req.query.groups
+        ? JSON.parse(decodeURIComponent(req.query.groups))
+        : [];
+
+
+    const numbers = req.query.numbers
+        ? decodeURIComponent(req.query.numbers).split(',').map(g => g.trim())
+        : [];
+
+    const names = req.query.names
+        ? decodeURIComponent(req.query.names).split(',').map(g => g.trim())
+        : [];
+
+    console.log(team_groups)
+    console.log(role)
+    console.log(numbers)
+    console.log(team)
+    let allGroups
+    let needsAttention
+    let groups = team_groups
+
+    // const not_num = await notifyNumberAdmin.distinct("num")
+    const not_num = await notifyNumberAdmin.aggregate([
+        { $sort: { time: -1 } },   // latest first
+        {
+            $group: {
+                _id: "$num",
+                doc: { $first: "$$ROOT" }
+            }
+        },
+        { $replaceRoot: { newRoot: "$doc" } }
+    ]);
+    res.render('configure_admin', { not_num, role, numbers, team, groups, names });
+});
+
+
 app.get('/configure', checkAuth, async (req, res) => {
 
-    const not_num = await notifyNumber.distinct("num")
-    res.render('configure', { not_num });
+    // const not_num = await notifyNumber.distinct("num")
+
+    const role = decodeURIComponent(req.query.role).trim();
+
+    const team = decodeURIComponent(req.query.team).trim();
+
+    // const team_groups = req.query.groups
+    //     ? decodeURIComponent(req.query.groups).split(',').map(g => g.trim())
+    //     : [];
+
+    const team_groups = req.query.groups
+        ? JSON.parse(decodeURIComponent(req.query.groups))
+        : [];
+
+
+    const numbers = req.query.numbers
+        ? decodeURIComponent(req.query.numbers).split(',').map(g => g.trim())
+        : [];
+
+    const names = req.query.names
+        ? decodeURIComponent(req.query.names).split(',').map(g => g.trim())
+        : [];
+
+    console.log(team_groups)
+    console.log(role)
+    console.log(numbers)
+    console.log(team)
+    let allGroups
+    let needsAttention
+    let groups = team_groups
+    const not_num = await notifyNumber.aggregate([
+        { $match: { team: team } },
+        { $sort: { time: -1 } },   // latest first
+        {
+            $group: {
+                _id: "$num",
+                doc: { $first: "$$ROOT" }
+            }
+        },
+        { $replaceRoot: { newRoot: "$doc" } }
+    ]);
+    res.render('configure', { not_num, role, numbers, team, groups, names });
+});
+
+
+app.get('/handle_team', checkAuth, async (req, res) => {
+
+    const role = decodeURIComponent(req.query.role).trim();
+
+    const team = decodeURIComponent(req.query.team).trim();
+
+    // const team_groups = req.query.groups
+    //     ? decodeURIComponent(req.query.groups).split(',').map(g => g.trim())
+    //     : [];
+
+    const team_groups = req.query.groups
+        ? JSON.parse(decodeURIComponent(req.query.groups))
+        : [];
+
+
+    const numbers = req.query.numbers
+        ? decodeURIComponent(req.query.numbers).split(',').map(g => g.trim())
+        : [];
+
+    const names = req.query.names
+        ? decodeURIComponent(req.query.names).split(',').map(g => g.trim())
+        : [];
+
+    console.log(team_groups)
+    console.log(role)
+    console.log(numbers)
+    console.log(team)
+
+    let groups = team_groups
+
+    const not_num = await dummyNumber.aggregate([
+        { $sort: { _id: -1 } },  // sort by latest inserted
+
+        {
+            $group: {
+                _id: "$num",
+                doc: { $first: "$$ROOT" }
+            }
+        },
+
+        { $replaceRoot: { newRoot: "$doc" } }
+    ]);
+
+    const handle_teams = await teams.find()
+
+    let selected_grps = []
+    let selected_nums = []
+
+
+    for (const team of handle_teams) {
+
+        for (const grp of team.groups) {
+
+            selected_grps.push(grp)
+        }
+
+        for (const [key, value] of team.agent_info) {
+            // console.log(key, value.role, value.number);
+            selected_nums.push(value.number)
+
+
+
+        }
+
+
+
+
+    }
+
+
+    console.log(selected_grps)
+    // const unique_selected_nums = [...new Set(selected_nums)];
+
+    console.log(selected_nums)
+
+    const allgrps = await User.distinct("group_name");
+
+    res.render('handle_team', { not_num, allgrps, handle_teams, selected_grps, selected_nums, role, groups, numbers, team, names });
 });
 
 
@@ -750,6 +1325,78 @@ app.get('/auth', (req, res) => {
 
 
 
+app.get('/register_team/:teamName', checkAuth, async (req, res) => {
+    try {
+        const team = await teams.findOne({ team_name: req.params.teamName });
+        let agent_num = []
+        let agent_name = []
+        let agent_role = []
+
+
+
+
+        const role = decodeURIComponent(req.query.role).trim();
+
+        const team_of_member = decodeURIComponent(req.query.team).trim();
+
+        // const team_groups = req.query.groups
+        //     ? decodeURIComponent(req.query.groups).split(',').map(g => g.trim())
+        //     : [];
+
+        const team_groups = req.query.groups
+            ? JSON.parse(decodeURIComponent(req.query.groups))
+            : [];
+
+
+        const numbers = req.query.numbers
+            ? decodeURIComponent(req.query.numbers).split(',').map(g => g.trim())
+            : [];
+
+        const names = req.query.names
+            ? decodeURIComponent(req.query.names).split(',').map(g => g.trim())
+            : [];
+
+        console.log(team_groups)
+        console.log(role)
+        console.log(numbers)
+        console.log(team_of_member)
+
+        let groups = team_groups
+
+        const teamName = team.team_name
+        const grps = team.groups // Your function to get groups
+        const not_num = team.agent_info // Your function to get agents
+        console.log(not_num)
+
+
+        for (const [key, value] of not_num) {
+            console.log(key, value.role, value.number);
+            agent_num.push(value.number)
+            agent_name.push(key)
+            agent_role.push(value.role)
+
+
+        }
+
+
+
+        res.render('register_team', {
+            team,
+            agent_num,
+            agent_name,
+            agent_role,
+            grps,
+            teamName,
+            role,
+            team_of_member,
+            groups,
+            numbers,
+            names
+        });
+    } catch (err) {
+        res.status(500).send('Server Error');
+    }
+});
 
 // Add these to your backend file
 
@@ -758,7 +1405,7 @@ app.get('/auth', (req, res) => {
 
 
 app.get('/dashboard', checkAuth, async (req, res) => {
-    const needsAttention = await analyzed.find({ attention: false }).sort({ last_message_time: -1 });
+
 
     // const allGroups = await User.distinct("group_name");
 
@@ -766,22 +1413,75 @@ app.get('/dashboard', checkAuth, async (req, res) => {
     //     group_name: { $nin: [null, ""] }
     // })
 
-    const allGroups = await User.aggregate([
-        { $match: { group_name: { $nin: [null, ""] } } },
-        { $sort: { milli_sec: -1 } },  // latest message first
-        {
-            $group: {
-                _id: "$group_name",
-                latestMilli: { $first: "$milli_sec" },
-                latestTimestamp: { $first: "$timestamp" }   // ✅ add this
+    const role = decodeURIComponent(req.query.role).trim();
 
-            }
-        },
-        { $sort: { latestMilli: -1 } }  // keep order
-    ]);
+    const team = decodeURIComponent(req.query.team).trim();
 
+    // const team_groups = req.query.groups
+    //     ? decodeURIComponent(req.query.groups).split(',').map(g => g.trim())
+    //     : [];
+
+    const team_groups = req.query.groups
+        ? JSON.parse(decodeURIComponent(req.query.groups))
+        : [];
+
+
+    const numbers = req.query.numbers
+        ? decodeURIComponent(req.query.numbers).split(',').map(g => g.trim())
+        : [];
+
+    const names = req.query.names
+        ? decodeURIComponent(req.query.names).split(',').map(g => g.trim())
+        : [];
+
+    console.log(team_groups)
+    console.log(role)
+    console.log(numbers)
+    console.log(team)
+    let allGroups
+    let needsAttention
+    let groups = team_groups
+
+    if (team_groups.length > 0 && team_groups[0] != '') {
+        needsAttention = await analyzed.find({ attention: false, group_name: team_groups }).sort({ last_message_time: -1 });
+
+        allGroups = await User.aggregate([
+            {
+                $match: {
+                    group_name: { $in: team_groups }  // 🔥 filter specific groups
+                }
+            },
+            { $sort: { milli_sec: -1 } },
+            {
+                $group: {
+                    _id: "$group_name",
+                    latestMilli: { $first: "$milli_sec" },
+                    latestTimestamp: { $first: "$timestamp" }
+                }
+            },
+            { $sort: { latestMilli: -1 } }
+        ]);
+
+    }
+    else {
+        needsAttention = await analyzed_admin.find({ attention: false }).sort({ last_message_time: -1 });
+
+        allGroups = await User.aggregate([
+            { $match: { group_name: { $nin: [null, ""] } } },
+            { $sort: { milli_sec: -1 } },  // latest message first
+            {
+                $group: {
+                    _id: "$group_name",
+                    latestMilli: { $first: "$milli_sec" },
+                    latestTimestamp: { $first: "$timestamp" }   // ✅ add this
+
+                }
+            },
+            { $sort: { latestMilli: -1 } }  // keep order
+        ]);
+    }
     // const groupNames = allGroups.map(g => g._id);
-    const groups = allGroups.map(g => ({
+    const clean_groups = allGroups.map(g => ({
         groupName: g._id,
         timestamp: g.latestTimestamp,
         milli_sec: g.latestMilli
@@ -791,13 +1491,40 @@ app.get('/dashboard', checkAuth, async (req, res) => {
     // console.log(milliseconds);
     console.log('render index → current_send:', current_send)
 
-    res.render('index', { needsAttention, groups, current_send });
+    console.log(clean_groups)
+
+
+    res.render('index', { needsAttention, groups, current_send, role, team, numbers, clean_groups, names });
 });
 
 // View Chat History for a Group
 app.get('/chat/:groupName', checkAuth, async (req, res) => {
 
     try {
+        const role = decodeURIComponent(req.query.role).trim();
+
+        const team = decodeURIComponent(req.query.team).trim();
+        // const team_groups = req.query.groups
+        //     ? decodeURIComponent(req.query.groups).split(',').map(g => g.trim()).map(g => g.trim())
+        //     : [];
+
+        const team_groups = req.query.groups
+            ? JSON.parse(decodeURIComponent(req.query.groups))
+            : [];
+
+        const u_numbers = req.query.numbers
+            ? decodeURIComponent(req.query.numbers).split(',').map(g => g.trim()).map(g => g.trim())
+            : [];
+
+        const names = req.query.names
+            ? decodeURIComponent(req.query.names).split(',').map(g => g.trim())
+            : [];
+
+        console.log(team_groups)
+        console.log(role)
+        console.log(u_numbers)
+        console.log(team)
+        let groups = team_groups
 
         const messages = await User.find({ group_name: req.params.groupName })
             .sort({ milli_sec: -1 })
@@ -808,14 +1535,328 @@ app.get('/chat/:groupName', checkAuth, async (req, res) => {
         const numbers = supportDocs.map(n => n.num);
         console.log(numbers)
         messages.reverse()
-
-        res.render('chat', { groupName: req.params.groupName, messages, numbers });
+        console.log(role)
+        res.render('chat', { groupName: req.params.groupName, messages, numbers, role, groups, u_numbers, team, names });
     }
     catch (err) {
         console.error(err);
         res.status(500).send('Server Error');
     }
 });
+
+
+app.get('/edit_team/:teamName', checkAuth, async (req, res) => {
+    try {
+        const team = await teams.findOne({ team_name: req.params.teamName });
+        let agent_name = []
+        // We need these for the dropdowns
+        const grps = team.groups // Your function to get groups
+        const not_num = team.agent_info // Your function to get agents
+        console.log(not_num)
+
+        const role = decodeURIComponent(req.query.role).trim();
+
+        const team_of_member = decodeURIComponent(req.query.team).trim();
+
+        // const team_groups = req.query.groups
+        //     ? decodeURIComponent(req.query.groups).split(',').map(g => g.trim())
+        //     : [];
+
+        const team_groups = req.query.groups
+            ? JSON.parse(decodeURIComponent(req.query.groups))
+            : [];
+
+        const numbers = req.query.numbers
+            ? decodeURIComponent(req.query.numbers).split(',').map(g => g.trim())
+            : [];
+
+        const names = req.query.names
+            ? decodeURIComponent(req.query.names).split(',').map(g => g.trim())
+            : [];
+
+        console.log(team_groups)
+        console.log(role)
+        console.log(numbers)
+        console.log(team_of_member)
+        let allGroups
+        let needsAttention
+        let groups = team_groups
+        // console.log(Object.keys(not_num))
+
+        for (const [key, value] of not_num) {
+            console.log(key, value.role, value.number);
+            agent_name.push(key)
+        }
+
+
+        // const all_num = await dummyNumber.aggregate([
+        //     { $sort: { _id: -1 } },  // sort by latest inserted
+
+        //     {
+        //         $group: {
+        //             _id: "$num",
+        //             doc: { $first: "$$ROOT" }
+        //         }
+        //     },
+
+        //     { $replaceRoot: { newRoot: "$doc" } }
+        // ]);
+        // const all_agents_name = all_num.map(doc => doc.name);
+
+        // console.log(all_agents_name)
+
+
+        const all_num = await dummyNumber.aggregate([
+            { $sort: { _id: -1 } },
+            {
+                $group: {
+                    _id: "$num",
+                    doc: { $first: "$$ROOT" }
+                }
+            },
+            { $replaceRoot: { newRoot: "$doc" } }
+        ]);
+
+        // CHANGE THIS: Map to objects instead of just strings
+        const all_agents = all_num.map(doc => ({
+            name: doc.name,
+            number: doc.num // Ensure this matches the field name in your DB ('num')
+        }));
+
+        console.log(all_agents)
+        const allgrps = await User.distinct("group_name");
+
+        let selected_grps = []
+        let selected_nums = []
+
+        const handle_teams = await teams.find()
+
+
+        for (const team of handle_teams) {
+
+            for (const grp of team.groups) {
+
+                selected_grps.push(grp)
+            }
+
+            for (const [key, value] of team.agent_info) {
+                // console.log(key, value.role, value.number);
+                selected_nums.push(value.number)
+
+
+
+            }
+
+
+
+
+        }
+
+
+        console.log(selected_grps)
+        // const unique_selected_nums = [...new Set(selected_nums)];
+
+        console.log(selected_nums)
+
+
+        console.log(agent_name)
+        res.render('edit_team', {
+            team,
+            allgrps,
+            agent_name,
+            grps,
+            all_agents,
+            selected_grps,
+            selected_nums,
+            role,
+            team_of_member,
+            groups,
+            numbers,
+            names
+
+        });
+    } catch (err) {
+        res.status(500).send('Server Error');
+    }
+});
+
+app.post('/update-team-full', checkAuth, async (req, res) => {
+    const { old_name, new_name, groups, agent_info, oldAgents } = req.body;
+
+    try {
+        // Find existing team
+        const team = await teams.findOne({ team_name: old_name });
+        const user_info = await teamMembers.find({ team_name: old_name })
+
+
+
+        team.team_name = new_name;
+        team.groups = groups;
+        let agent_name = []
+        console.log(team.team_name)
+        console.log(team.groups)
+        let new_agent_nums = []
+        let new_agent_names = []
+
+        for (const [name, info] of Object.entries(agent_info)) {
+            console.log(name, info.number, info.role);
+
+            if (info.number === "...") {
+                // Find the actual number from dummyNumber collection
+                const one_agent = await dummyNumber.findOne({ name: name });
+                console.log(one_agent)
+
+                if (one_agent) {
+                    info.number = one_agent.num; // update the original object
+                }
+
+                agent_name.push(name);
+
+            }
+
+            for (const user of user_info) {
+
+                if (user.number === info.number) {
+                    user.role = info.role
+                    await user.save()
+                }
+            }
+
+            new_agent_nums.push(info.number)
+            new_agent_names.push(name)
+
+
+        }
+
+        for (const user of user_info) {
+
+            user.numbers = new_agent_nums
+            user.names = new_agent_names
+
+            await user.save()
+
+        }
+
+
+
+        // Clear and replace the Map
+        team.agent_info = agent_info;
+        console.log(agent_info)
+        console.log(agent_name)
+
+
+        await team.save();
+
+        if (oldAgents.length > 0) {
+
+            console.log("OLD AGENTS: ", oldAgents)
+
+            await teamMembers.deleteMany({
+                team_name: old_name,
+                number: { $in: oldAgents }
+            });
+
+            await notifyNumber.deleteMany({
+                team: old_name,
+                num: { $in: oldAgents }
+            });
+
+        }
+
+        await teamMembers.updateMany(
+            { team_name: old_name },
+            {
+                $set: {
+                    team_name: new_name,
+                    groups: groups
+                }
+            }
+        );
+        await notifyNumber.updateMany(
+            { team: old_name },
+            {
+                $set: {
+                    team: new_name,
+                    groups: groups
+                }
+            }
+        );
+
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.post('/delete-team', checkAuth, async (req, res) => {
+    const { team_name } = req.body
+
+    try {
+
+        const team_info = await teams.find({ team_name: team_name })
+
+        console.log("DELETE TEAM")
+        console.log(team_info)
+
+        await teams.deleteOne({ team_name });
+        await teamMembers.deleteMany({ team_name });
+        await notifyNumber.deleteMany({ team: team_name });
+
+
+        res.json({ success: true });
+
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
+app.post('/register_user', checkAuth, async (req, res) => {
+    const { username, number, password, role, numbers, team_name, groups, names } = req.body
+
+    try {
+
+        console.log(groups)
+        console.log(numbers)
+
+        console.log(team_name)
+
+        const member_registered = await teamMembers.find({ number: number, team_name: team_name })
+
+
+        if (member_registered.length > 0) {
+
+            res.json({ success: false, message: "already" })
+
+        }
+        else {
+
+            const response = await axios.post(
+                "http://localhost:5700/send",
+                {
+                    to: `${number}`,
+                    text: `Team Name: ${team_name}\nRole: ${role}\nUser Name: ${username}\nUser Number: ${number}\nPassword: ${password}\nGroups Assigned: ${groups}`,
+                },
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                }
+            )
+            teamMembers.create({ username: username, number: number, password: password, role: role, team_name: team_name, numbers: numbers, groups: groups, names: names })
+            res.json({ success: true })
+
+        }
+
+
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).send('Server Error');
+    }
+});
+
 
 app.get('/', checkAuth, (req, res) => {
     res.redirect('/dashboard');
@@ -843,7 +1884,7 @@ app.post('/send', async (req, res) => {
             const [wa] = await sock.onWhatsApp(jid);
             if (!wa?.exists) {
                 // return res.status(404).json({ ok: false, error: 'Number not on WhatsApp' });
-                HTMLFormControlsCollection.log("Number Not On Whatsapp")
+                console.log("Number Not On Whatsapp")
             }
         }
 
@@ -874,6 +1915,8 @@ app.post('/delete-group', async (req, res) => {
     const { group_name } = req.body;
 
     await analyzed.deleteMany({ group_name });
+    await analyzed_admin.deleteMany({ group_name });
+
 
     res.json({ success: true });
 });
@@ -891,6 +1934,11 @@ app.post('/attention-true', async (req, res) => {
     if (doc) {
         doc.attention = true;
         await doc.save();
+    }
+    const doc2 = await analyzed_admin.findOne({ group_name });
+    if (doc2) {
+        doc2.attention = true;
+        await doc2.save();
     }
     await resolved_issue.create({ group_name: group_name, message: message, BY_AI: false, Remarks: remarks, time_solved: pakTime })
     res.json({ success: true });
@@ -912,25 +1960,25 @@ app.post('/add_remarks', async (req, res) => {
 app.post('/register_check', async (req, res) => {
 
     // const { fname, email, password } = req.body
-    const { username, password } = req.body
+    const { usernum, password } = req.body
 
 
     // let na = fname
-    let uname = username
+    let unum = usernum
     let pas = password
 
     // console.log(na, em, pas)
-    console.log(uname, pas)
+    console.log(unum, pas)
 
 
-    const che = await reg.findOne({ username: uname })
+    const che = await reg.findOne({ usernaum: unum })
 
     if (!che) {
 
         try {
             const hashedPassword = await bcrypt.hash(pas, 10);
             const newUser = new reg({
-                username: uname,
+                usernum: unum,
                 password: hashedPassword // Store the hash, not the plain text
             });
             await newUser.save();
@@ -955,28 +2003,68 @@ app.post('/register_check', async (req, res) => {
 
 app.post('/login_check', async (req, res) => {
 
-    const { username, password } = req.body
+    const { type,  password, number } = req.body
 
 
-    let uname = username
+
+
+
+    let unum = number
     let pas = password
 
-    console.log(uname, pas)
+    console.log(type)
 
-    const user = await reg.findOne({ username: uname });
-    if (!user) return res.send({ success: false, message: 'User not found' });
+    if (type === "admin" ) {
 
-    const isMatch = await bcrypt.compare(pas, user.password);
+        console.log("ADMIN LOGIN")
+        console.log(unum, pas)
 
-    if (isMatch) {
-        // This line creates the session in MongoDB and the cookie in the browser
-        req.session.userId = user._id;
-        return res.json({ success: true, redirect: "/dashboard" });
+        const user = await reg.findOne({ usernum: unum });
+        if (!user) return res.send({ success: false, message: 'User not found' });
 
-    } else {
-        res.send({ success: false, message: 'Invalid password' });
+        const isMatch = await bcrypt.compare(pas, user.password);
+
+        if (isMatch) {
+            // This line creates the session in MongoDB and the cookie in the browser
+            req.session.userId = user._id;
+            return res.json({ success: true, redirect: `/dashboard?role=admin` });
+
+        } else {
+            res.send({ success: false, message: 'Invalid password' });
+        }
     }
+    else {
+        console.log('MEMBER LOGIN')
+        console.log(unum, pas, number)
 
+        const user = await teamMembers.findOne({ number: number });
+        if (!user) return res.send({ success: false, message: 'User not found' });
+
+        console.log(user.username, user.password, user.number, user.team_name)
+
+
+        if (user.password === pas && user.number === unum) {
+            // This line creates the session in MongoDB and the cookie in the browser
+            req.session.userId = user._id;
+            // return res.json({ success: true, redirect: `/dashboard?role=${user.role}&team=${user.team_name}&groups=${user.groups.join(',')}&numbers=${user.numbers.join(',')}` });
+
+            return res.json({
+                success: true,
+                redirect:
+                    `/dashboard?role=${encodeURIComponent(user.role)}` +
+                    `&team=${encodeURIComponent(user.team_name)}` +
+                    `&groups=${encodeURIComponent(JSON.stringify(user.groups))}` +
+                    `&numbers=${encodeURIComponent(user.numbers.join(','))}` +
+                    `&names=${encodeURIComponent(user.names.join(','))}`
+
+            });
+
+
+        } else {
+            res.send({ success: false, message: 'Invalid Credentials' });
+        }
+
+    }
 
 
 })
@@ -990,8 +2078,8 @@ app.get('/logout_bot', (req, res) => {
 app.post('/set-time', async (req, res) => {
     const { New_time } = req.body;
 
-    timer = Number(New_time)
-    console.log("New Timer: ", timer)
+    timerAdmin = Number(New_time)
+    console.log("New Timer: ", timerAdmin)
     startReplyChecker()
 
     res.json({ success: true });
@@ -1009,16 +2097,75 @@ app.post('/set-time-for_notify', async (req, res) => {
 });
 
 
+app.post('/set-team', async (req, res) => {
+    const { numbers, groups, Team_Name } = req.body;
+
+    // let num = 
+
+    const team_is_there = await teams.find({ team_name: Team_Name })
+
+    if (team_is_there.length > 0) {
+
+        res.json({ success: false, message: "Team name already registered" });
+
+    }
+    else {
+
+
+        const agents = await dummyNumber.find({
+            num: numbers
+        });
+        let num_name = {}
+        for (const agent of agents) {
+            num_name[agent['name']] = { 'role': "member", 'number': agent['num'] }
+
+
+
+        }
+        console.log(num_name)
+        // let notify_time = Number(New_time)
+        // notify_time = notify_time * 60 * 1000    // notify_nums.push(num)
+        let grp_list = groups
+
+        console.log(grp_list)
+
+        await teams.create({ groups: grp_list, agent_info: num_name, team_name: Team_Name })
+
+        res.json({ success: true });
+
+    }
+});
+
+
 app.post('/set-numbers', async (req, res) => {
-    const { New_number, New_time } = req.body;
+    const { New_number, New_time, team, name, groups } = req.body;
+    
+    console.log("TEAM CONFIGURATION")
+    const team_groups = groups
+        ? JSON.parse(decodeURIComponent(groups))
+        : [];
+    console.log(groups)
+    console.log(team_groups)
+
 
     let num = New_number
     let notify_time = Number(New_time)
-    notify_time = notify_time * 60 * 1000    // notify_nums.push(num)
+    notify_time = notify_time * 60 * 1000   
 
-    // console.log(notify_nums)
+   await notifyNumber.updateOne(
+    { num: num }, 
+    { 
+        $set: { 
+            time_to_notify: notify_time,
+            team: team,
+            name: name,
+            groups: team_groups
+        } 
+    },
+    { upsert: true }
+);
 
-    await notifyNumber.create({ num: num, time_to_notify: notify_time })
+    // await notifyNumber.create({ num: num, time_to_notify: notify_time, team: team, name: name, groups: team_groups })
     let not_num = await notifyNumber.distinct('num')
     console.log(not_num)
     res.json({ success: true });
@@ -1034,6 +2181,57 @@ app.post('/del-numbers', async (req, res) => {
     if (exists) {
         console.log("✅ Exists");
         await notifyNumber.deleteMany({ num: num });
+        res.json({ success: true });
+
+
+    } else {
+        console.log("❌ Not found");
+        res.json({ success: false })
+
+    }
+
+});
+
+
+app.post('/set-numbers-admins', async (req, res) => {
+    const { New_number, New_time } = req.body;
+
+    let num = New_number
+    let notify_time = Number(New_time)
+    notify_time = notify_time * 60 * 1000    // notify_nums.push(num)
+    console.log(num)
+    // console.log(notify_nums)
+
+    await notifyNumberAdmin.updateOne(
+    { num: num }, 
+    { 
+        $set: { 
+            
+            time_to_notify: notify_time
+        
+        } 
+    },
+    { upsert: true }
+);
+
+    // await notifyNumberAdmin.create({ num: num, time_to_notify: notify_time })
+    let not_num = await notifyNumberAdmin.distinct('num')
+    console.log(not_num)
+    res.json({ success: true });
+});
+
+
+
+app.post('/del-numbers-admins', async (req, res) => {
+    const { del_number } = req.body;
+
+    let num = del_number
+
+    const exists = await notifyNumberAdmin.exists({ num: num });
+
+    if (exists) {
+        console.log("✅ Exists");
+        await notifyNumberAdmin.deleteMany({ num: num });
         res.json({ success: true });
 
 

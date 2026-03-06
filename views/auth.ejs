@@ -6,340 +6,242 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agent Access | Secure Login</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
             --whatsapp-green: #25d366;
             --dark-green: #075e54;
-            --light-green: #dcf8c6;
+            --primary-gradient: linear-gradient(135deg, #075e54 0%, #128c7e 100%);
+            --bg: #f8fafc;
             --white: #ffffff;
-            --off-white: #f0f2f5;
+            --border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
         }
 
+        * { box-sizing: border-box; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background-color: var(--off-white);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            background-image: radial-gradient(circle at 2px 2px, #e2e8f0 1px, transparent 0);
+            background-size: 40px 40px;
             margin: 0;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
         }
 
-        .auth-container {
+        .auth-card {
             background: var(--white);
-            width: 450px;
-            padding: 40px;
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(7, 94, 84, 0.1);
-            text-align: center;
-            border: 1px solid rgba(37, 211, 102, 0.2);
+            width: 100%;
+            max-width: 440px;
+            padding: 48px;
+            border-radius: 32px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--white);
         }
 
-        .logo-area {
-            width: 70px;
-            height: 70px;
-            background: var(--whatsapp-green);
+        .brand-header { text-align: center; margin-bottom: 32px; }
+
+        .logo-circle {
+            width: 64px; height: 64px;
+            background: var(--primary-gradient);
             color: white;
             border-radius: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 2rem;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.5rem;
             margin: 0 auto 20px;
+            box-shadow: 0 10px 15px -3px rgba(7, 94, 84, 0.3);
         }
 
-        h1 {
+        h1 { color: var(--text-main); font-size: 1.75rem; font-weight: 800; margin: 0; letter-spacing: -0.025em; }
+        p { color: var(--text-muted); font-size: 0.95rem; margin: 8px 0 0; }
+
+        .mode-toggle {
+            display: flex;
+            background: #f1f5f9;
+            padding: 6px;
+            border-radius: 16px;
+            margin: 32px 0;
+        }
+
+        .mode-btn {
+            flex: 1; padding: 12px; border: none; background: transparent;
+            font-weight: 700; color: var(--text-muted); cursor: pointer;
+            border-radius: 12px; font-size: 0.85rem; letter-spacing: 0.05em;
+        }
+
+        .mode-btn.active {
+            background: var(--white);
             color: var(--dark-green);
-            font-size: 1.75rem;
-            font-weight: 800;
-            margin-bottom: 10px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
 
-        p {
-            color: #666;
-            font-size: 0.95rem;
-            margin-bottom: 30px;
-        }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 8px; color: var(--text-main); font-weight: 700; font-size: 0.85rem; }
 
-        .input-wrapper {
-            margin-bottom: 20px;
-            text-align: left;
-        }
+        .input-box { position: relative; display: flex; align-items: center; }
+        .input-box i { position: absolute; left: 16px; color: var(--text-muted); font-size: 1.1rem; }
 
-        .input-wrapper label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--dark-green);
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-        .input-field {
-            position: relative;
-        }
-
-        .input-field i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--whatsapp-green);
-        }
-
-        .input-field input {
+        .input-box input {
             width: 100%;
-            padding: 14px 15px 14px 45px;
-            border: 2px solid #e1e8ed;
-            border-radius: 12px;
+            padding: 14px 16px 14px 48px;
+            background: #f8fafc;
+            border: 2px solid #f1f5f9;
+            border-radius: 14px;
             font-size: 1rem;
             outline: none;
-            box-sizing: border-box;
-            transition: all 0.3s ease;
         }
 
-        .input-field input:focus {
+        .input-box input:focus {
+            background: var(--white);
             border-color: var(--whatsapp-green);
-            background-color: #fafff8;
             box-shadow: 0 0 0 4px rgba(37, 211, 102, 0.1);
         }
 
-        .btn-green {
+        .toggle-password { position: absolute; right: 16px; left: auto !important; cursor: pointer; }
+
+        .btn-submit {
             width: 100%;
-            background: var(--whatsapp-green);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background 0.3s;
-            margin-top: 10px;
+            background: var(--primary-gradient);
+            color: white; border: none;
+            padding: 16px; border-radius: 14px;
+            font-size: 1rem; font-weight: 700;
+            cursor: pointer; margin-top: 12px;
+            display: flex; justify-content: center; align-items: center; gap: 10px;
         }
 
-        .btn-green:hover {
-            background: #20bd5c;
-        }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(7, 94, 84, 0.2); }
 
-        .toggle-link {
-            margin-top: 25px;
-            font-size: 0.9rem;
-            color: #666;
-        }
-
-        .toggle-link span {
-            color: var(--dark-green);
-            font-weight: 700;
-            cursor: pointer;
-            text-decoration: underline;
-        }
-
-        /* Hidden states for toggle */
-        .hidden {
-            display: none;
-        }
-
-    
-        #togglePass2 {
-            left: auto !important;
-            right: 15px !important;
-        }
-
-        /* Eye icon k liye input me right padding */
-        .input-field input {
-            padding-right: 45px;
-        }
+        .footer-note { text-align: center; margin-top: 24px; font-size: 0.85rem; color: var(--text-muted); }
     </style>
 </head>
 
 <body>
 
-    <div class="auth-container">
-        <div class="logo-area">
-            <i class="fas fa-shield-alt"></i>
+    <div class="auth-card">
+        <div class="brand-header">
+            <div class="logo-circle">
+                <i class="fas fa-shield-check" id="main-icon"></i>
+            </div>
+            <h1 id="title">Portal Login</h1>
+            <p id="desc">Secure access to OAS Support systems.</p>
         </div>
 
-        <div id="login-section">
-            <h1>Agent Login</h1>
-            <p>Enter your credentials to access the dashboard.</p>
-            <form>
-                <div class="input-wrapper">
-                    
-                    <label>Full Name</label>
-                    <div class="input-field">
-                        <i class="fas fa-user"></i>
-                        <input id="uname" type="text" name="name" placeholder="Mir Osama Ali" required>
-                    </div>
-                </div>
-                <div class="input-wrapper">
-                    <label>Password</label>
-                    <div class="input-field">
-                        <i class="fas fa-lock"></i>
-                        <input id="passl" type="password" name="password" placeholder="••••••••" required>
-
-                        <i class="fas fa-eye" id="togglePass2" style="cursor:pointer;"></i>
-
-                    </div>
-                </div>
-                <button type="button" class="btn-green" onclick="sendDatalogin()">Sign In</button>
-            </form>
-            <!-- <div class="toggle-link">
-                Don't have an account? <span onclick="toggleAuth()">Sign Up</span>
-            </div> -->
+        <div class="mode-toggle">
+            <button class="mode-btn active" onclick="switchMode('admin')">ADMINISTRATOR</button>
+            <button class="mode-btn" onclick="switchMode('member')">TEAM MEMBER</button>
         </div>
-        <!-- 
-        <div id="signup-section" class="hidden">
-            <h1>Create Account</h1>
-            <p>Register as a new support agent.</p>
-            <form>
-             <div class="input-wrapper">
-                    <label>Full Name</label>
-                    <div class="input-field">
-                        <i class="fas fa-user"></i>
-                        <input id="fname" type="text" name="name" placeholder="John Doe" required>
-                    </div>
-                </div> -->
-        <!-- <div class="input-wrapper">
-                    <label>Email Address</label>
-                    <div class="input-field">
-                        <i class="fas fa-envelope"></i>
-                        <input id="em" type="text" pattern="^[^\s@]+@[^\s@]+\.[^\s@]+$" name="email"
-                            placeholder="agent@support.com" required>
-                    </div>
-                </div>
-                <div class="input-wrapper">
-                    <label>Password</label>
-                    <div class="input-field">
-                        <i class="fas fa-lock"></i>
-                        <input id="pass" type="password" name="password" placeholder="••••••••" required>
 
-                        <i class="fas fa-eye" id="togglePass" style="cursor:pointer;"></i>
-
-                    </div>
+        <form id="loginForm">
+            <div class="input-group">
+                <label id="phone-label">Admin WhatsApp Number</label>
+                <div class="input-box">
+                    <i class="fab fa-whatsapp"></i>
+                    <input id="unumber" type="text" placeholder="923001234567" required>
                 </div>
-                <button type="button" class="btn-green" onclick="sendDataRegister()">Register Agent</button>
-            </form>
-            <div class="toggle-link">
-                Already registered? <span onclick="toggleAuth()">Login Here</span>
-            </div> -->
-        <!-- </div> -->
+            </div>
+
+            <div class="input-group">
+                <label>Secure Password</label>
+                <div class="input-box">
+                    <i class="far fa-lock-alt"></i>
+                    <input id="passl" type="password" placeholder="••••••••" required>
+                    <i class="far fa-eye toggle-password" id="togglePass"></i>
+                </div>
+            </div>
+
+            <button type="button" class="btn-submit" onclick="handleAuth()">
+                <span id="btn-text">Sign Into Dashboard</span>
+                <i class="fas fa-arrow-right"></i>
+            </button>
+        </form>
+
+        <div class="footer-note">
+            <i class="fas fa-info-circle"></i> Unauthorized access is strictly monitored.
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
-        function toggleAuth() {
-            document.getElementById('login-section').classList.toggle('hidden');
-            document.getElementById('signup-section').classList.toggle('hidden');
-        }
+        let currentMode = 'admin';
 
-        // const passInput = document.getElementById("pass");
-        const passInputl = document.getElementById("passl");
-
-        // const togglePass = document.getElementById("togglePass");
-        const togglePass2 = document.getElementById("togglePass2");
-
-
-        // togglePass.addEventListener("click", () => {
-        //     const isPassword = passInput.type === "password";
-        //     passInput.type = isPassword ? "text" : "password";
-
-        //     togglePass.classList.toggle("fa-eye");
-        //     togglePass.classList.toggle("fa-eye-slash");
-        // });
-
-        togglePass2.addEventListener("click", () => {
-            const isPassword = passInputl.type === "password";
-            passInputl.type = isPassword ? "text" : "password";
-
-            togglePass2.classList.toggle("fa-eye");
-            togglePass2.classList.toggle("fa-eye-slash");
+        // Password Toggle Logic
+        document.getElementById("togglePass").addEventListener("click", function() {
+            const input = document.getElementById("passl");
+            const isPass = input.type === "password";
+            input.type = isPass ? "text" : "password";
+            this.classList.toggle("fa-eye");
+            this.classList.toggle("fa-eye-slash");
         });
 
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // UI Updates
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
 
-        // async function sendDataRegister() {
-        //     // const fname = document.getElementById('fname');
-        //     const pass = document.getElementById('pass');
-        //     const em = document.getElementById('em');
+            const icon = document.getElementById('main-icon');
+            const title = document.getElementById('title');
+            const phoneLabel = document.getElementById('phone-label');
+            const btnText = document.getElementById('btn-text');
 
-
-        //     // if (!fname.checkValidity()) {
-        //     //     fname.reportValidity();
-        //     //     return;
-        //     // }
-
-        //     if (!em.checkValidity()) {
-        //         em.reportValidity();
-        //         return;
-        //     }
-        //     if (!pass.checkValidity()) {
-        //         pass.reportValidity();
-        //         return;
-        //     }
-
-        //     // console.log(fname.value)
-        //     console.log(pass.value)
-        //     console.log(em.value)
-
-        //     const res = await fetch(`/register_check`, {
-        //         method: 'POST',
-        //         headers: { 'Content-Type': 'application/json' },
-        //         // body: JSON.stringify({ fname: fname.value, email: em.value, password: pass.value })
-        //         body: JSON.stringify({ email: em.value, password: pass.value })
-
-        //     });
-
-        //     const data = await res.json();
-        //     if (data.success) {
-        //         Swal.fire('Success', 'User Registered', 'success').then(() => location.reload());
-        //     }
-        //     else {
-
-        //         Swal.fire('Error', data.message, 'error');
-
-        //     }
-
-
-        // }
-
-
-        async function sendDatalogin() {
-
-            const pass = document.getElementById('passl');
-            const uname = document.getElementById('uname');
-
-            if (!uname.checkValidity()) {
-                uname.reportValidity();
-                return;
+            if (mode === 'member') {
+                title.innerText = "Member Access";
+                phoneLabel.innerText = "Member WhatsApp Number";
+                btnText.innerText = "Member Dashboard";
+                icon.className = "fas fa-user-tie";
+            } else {
+                title.innerText = "Admin Portal";
+                phoneLabel.innerText = "Admin WhatsApp Number";
+                btnText.innerText = "Admin Dashboard";
+                icon.className = "fas fa-shield-check";
             }
-            if (!pass.checkValidity()) {
-                pass.reportValidity();
-                return;
-            }
-
-            console.log(pass.value)
-            console.log(uname.value)
-
-            const res = await fetch(`/login_check`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: uname.value, password: pass.value })
-            });
-
-            const data = await res.json();
-            if (data.success) {
-                window.location.href = data.redirect;
-
-            }
-            else {
-
-                Swal.fire('Error', data.message, 'error');
-
-            }
-
         }
 
+        async function handleAuth() {
+            const unumber = document.getElementById('unumber');
+            const pass = document.getElementById('passl');
+
+            // Native Validation
+            if(!unumber.reportValidity()) return;
+            if(!pass.reportValidity()) return;
+
+            Swal.fire({
+                title: 'Verifying...',
+                html: `Authenticating ${currentMode} credentials`,
+                didOpen: () => Swal.showLoading()
+            });
+
+            // Simplified Payload
+            const payload = {
+                type: currentMode,
+                number: unumber.value,
+                password: pass.value
+            };
+
+            try {
+                const res = await fetch(`/login_check`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    Swal.fire({ icon: 'success', title: 'Welcome Back!', showConfirmButton: false, timer: 1500 })
+                    .then(() => window.location.href = data.redirect);
+                } else {
+                    Swal.fire('Authentication Failed', data.message, 'error');
+                }
+            } catch (err) {
+                Swal.fire('Connection Error', 'Please check your internet.', 'error');
+            }
+        }
     </script>
 </body>
-
 </html>

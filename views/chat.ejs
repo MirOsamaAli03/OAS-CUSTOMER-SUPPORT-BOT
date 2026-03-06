@@ -152,7 +152,9 @@
 <body>
 
     <header>
-        <a href="/dashboard"><i class="fas fa-arrow-left"></i></a>
+        <a
+            href="/dashboard?role=<%= encodeURIComponent(role) %>&team=<%= encodeURIComponent(team) %>&groups=<%= encodeURIComponent(JSON.stringify(groups)) %>&numbers=<%= encodeURIComponent(u_numbers.join(',')) %>&names=<%= encodeURIComponent(names.join(',')) %>"><i
+                class="fas fa-arrow-left"></i></a>
         <h1>
             <%= groupName %>
         </h1>
@@ -175,29 +177,30 @@
                         <%= new Date(msg.milli_sec).toString() %>
                     </span>
                 </div>
-                <% }
-                else{ %> <div class="msg <%=numbers.includes(msg.person_num.toString())? 'support' :'customer' %>">
+                <% } else{ %>
+                    <div class="msg <%=numbers.includes(msg.person_num.toString())? 'support' :'customer' %>">
 
 
-                    <span class="sender-name">
-                        <%= numbers.includes(msg.person_num.toString())? 'Support' : 'Customer' %>
-                    </span>
-                    <p>
-                        <%= msg.message_text %>
-                    </p>
-                    <span class="time">
-                        <%= new Date(msg.milli_sec).toString() %>
-                    </span>
-    </div> <% }%>
-    <% }) %>
-        </div>
+                        <span class="sender-name">
+                            <%= numbers.includes(msg.person_num.toString())? 'Support' : 'Customer' %>
+                        </span>
+                        <p>
+                            <%= msg.message_text %>
+                        </p>
+                        <span class="time">
+                            <%= new Date(msg.milli_sec).toString() %>
+                        </span>
+                    </div>
+                    <% }%>
+                        <% }) %>
+    </div>
 
 
 
-        <script>
-            // Scroll to bottom on load
-            const chatBox = document.getElementById('chatBox');
-            chatBox.scrollTop = chatBox.scrollHeight;
+    <script>
+        // Scroll to bottom on load
+        const chatBox = document.getElementById('chatBox');
+        chatBox.scrollTop = chatBox.scrollHeight;
 
         // async function sendReply() {
         //     const text = document.getElementById('replyText').value;
@@ -220,7 +223,7 @@
         //         alert("Failed to send message. Make sure the 'to' field is a valid JID.");
         //     }
         // }
-        </script>
+    </script>
 </body>
 
 </html>

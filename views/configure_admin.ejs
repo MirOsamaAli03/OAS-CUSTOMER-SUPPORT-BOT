@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OAS | Agent Settings</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+
+    <style>
+        :root {
+            --primary: #075e54;
+            --whatsapp-green: #25d366;
+            --danger: #ef4444;
+            --bg: #f8fafc;
+            --white: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: all 0.2s ease-in-out;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 260px;
+            background: var(--primary);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            z-index: 100;
+            /* box-shadow: 4px 0 10px rgba(0, 0, 0, 0.05); */
+        }
+
+        .sidebar-brand {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: white;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .nav-item.active {
+            background: var(--whatsapp-green);
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(37, 211, 102, 0.2);
+        }
+
+        .logout-btn {
+            margin-top: auto;
+            color: #fecaca;
+            border: 1px solid rgba(254, 202, 202, 0.2);
+            justify-content: center;
+        }
+
+
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            padding: 40px;
+            max-width: 1400px;
+        }
+
+        /* UI ENHANCEMENTS */
+        .settings-header {
+            margin-bottom: 40px;
+        }
+
+        .settings-container {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            /* Unbalanced grid looks more professional */
+            gap: 30px;
+        }
+
+        /* THE ADD/UPDATE CARD */
+        .management-card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 40px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 25px;
+            color: var(--primary);
+        }
+
+        .input-wrapper {
+            background: #f1f5f9;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .input-wrapper:focus-within {
+            background: #fff;
+            border-color: var(--whatsapp-green);
+            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.1);
+        }
+
+        .input-wrapper label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-main);
+            outline: none;
+        }
+
+        /* ACTIVE LIST / DELETE AREA */
+        .active-list-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 30px;
+            border: 1px solid var(--border);
+        }
+
+        .number-tag {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            transition: 0.2s;
+        }
+
+        .number-tag:hover {
+            border-color: var(--danger);
+            background: #fff1f2;
+        }
+
+        .del-btn-small {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 5px;
+            transition: 0.2s;
+        }
+
+        .del-btn-small:hover {
+            color: var(--danger);
+        }
+
+        .btn-main {
+            width: 100%;
+            padding: 18px;
+            border-radius: 14px;
+            font-weight: 700;
+            font-size: 1rem;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-save {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 4px 14px rgba(7, 94, 84, 0.3);
+        }
+
+        .btn-save:hover {
+            background: var(--whatsapp-green);
+            transform: translateY(-2px);
+        }
+
+
+        /* Responsive */
+        @media (max-width: 1000px) {
+            .settings-container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                width: 80px;
+                padding: 20px 10px;
+            }
+
+            .sidebar-brand span,
+            .nav-item span {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 80px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="sidebar">
+        <a href="#" class="sidebar-brand">
+            <i class="fab fa-whatsapp" style="font-size: 1.8rem; color: var(--whatsapp-green);"></i>
+            <span>OAS Support</span>
+        </a>
+
+        <div class="nav-menu">
+            <a href="/dashboard?role=<%= encodeURIComponent(role) %>&team=<%= encodeURIComponent(team) %>&groups=<%= encodeURIComponent(JSON.stringify(groups)) %>&numbers=<%= encodeURIComponent(numbers.join(',')) %>&names=<%= encodeURIComponent(names.join(',')) %>"
+                class="nav-item">
+                <i class="fas fa-th-large"></i> <span>Dashboard</span>
+            </a>
+            <a href="#" class="nav-item active">
+                <i class="fas fa-sliders-h"></i> <span>Configuration</span>
+            </a>
+
+            <a href="/handle_team?role=<%= encodeURIComponent(role) %>
+                    &team=<%= encodeURIComponent(team) %>
+                    &groups=<%= encodeURIComponent(JSON.stringify(groups)) %>
+                    &numbers=<%= encodeURIComponent(numbers.join(',')) %>
+                    &names=<%= encodeURIComponent(names.join(',')) %>" class="nav-item">
+                <i class="fas fa-users-cog"></i> <span>Handle Team</span>
+            </a>
+
+        </div>
+
+        <a href="/logout_bot" class="nav-item logout-btn">
+            <i class="fas fa-power-off"></i> <span>Logout</span>
+        </a>
+    </nav>
+
+    <main class="main-content">
+        <div class="settings-header">
+            <h1 style="font-weight: 800; font-size: 2.2rem; color: var(--text-main); margin:0;">Configuration</h1>
+            <p style="color: var(--text-muted); margin-top: 8px;">Control support accessibility and response intervals.
+            </p>
+        </div>
+
+        <div class="settings-container">
+            <div class="management-card">
+                <div class="section-label">
+                    <i class="fas fa-user-plus"></i> Add or Update Agent
+                </div>
+
+                <div class="input-wrapper">
+                    <label>Agent WhatsApp Number</label>
+                    <input list="numbers" type="text" id="number_input" placeholder="923000000000"
+                        pattern="^92[0-9]{10}$" maxlength="12">
+                </div>
+
+                <div class="input-wrapper">
+                    <label>Inactivity Alert Threshold (Minute(s))</label>
+                    <input type="number" id="timer_input" placeholder="1">
+                </div>
+
+                <button class="btn-main btn-save" onclick="sendData()">
+                    Sync Configuration <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+
+            <div class="active-list-card">
+                <div class="section-label" style="color: var(--text-main);">
+                    <i class="fas fa-list-ul"></i> Active Numbers
+                </div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 20px;">Click the trash icon to
+                    remove an agent.</p>
+
+                <div id="numberList">
+                    <% not_num.forEach(n=> { %>
+                        <div class="number-tag">
+                            <span style="font-weight: 600; color: var(--primary);">+<%= n.num %></span>
+                            <span><i class="fas fa-stopwatch"></i>
+                                <%= ((n.time_to_notify)/1000)/60 %> min threshold
+                            </span>
+                            <button class="del-btn-small" onclick="quickDelete('<%= n.num %>')">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                        <% }) %>
+                </div>
+
+                <% if(not_num.length===0) { %>
+                    <div
+                        style="text-align:center; padding: 20px; color: var(--text-muted); border: 2px dashed var(--border); border-radius: 12px;">
+                        No active numbers
+                    </div>
+                    <% } %>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        async function sendData() {
+            const num = document.getElementById('number_input').value;
+            const time = document.getElementById('timer_input').value;
+
+            if (!num || !time) {
+                Swal.fire('Error', 'Please fill all fields', 'error');
+                return;
+            }
+
+            Swal.fire({ title: 'Processing...', didOpen: () => Swal.showLoading() });
+
+            const res = await fetch(`/set-numbers-admins`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ New_number: num, New_time: time })
+            });
+
+            const data = await res.json();
+            if (data.success) {
+                Swal.fire('Updated!', 'Agent configuration saved.', 'success').then(() => location.reload());
+            }
+        }
+
+        async function quickDelete(val) {
+            const confirm = await Swal.fire({
+                title: 'Remove Agent?',
+                text: `Number ${val} will no longer be monitored.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                confirmButtonText: 'Yes, remove'
+            });
+
+            if (confirm.isConfirmed) {
+                const res = await fetch(`/del-numbers-admins`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ del_number: val })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    Swal.fire('Deleted', 'Number removed.', 'success').then(() => location.reload());
+                }
+            }
+        }
+    </script>
+</body>
+
+</html>

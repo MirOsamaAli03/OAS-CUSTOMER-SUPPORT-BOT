@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OAS | Agent Support Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --primary: #075e54;
@@ -22,10 +22,14 @@
             --border: #e2e8f0;
         }
 
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+            transition: all 0.2s ease-in-out;
+        }
+
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             background-color: var(--bg);
             color: var(--text-main);
             margin: 0;
@@ -35,28 +39,35 @@
 
         /* --- SIDEBAR --- */
         .sidebar {
-            width: 280px;
+            width: 260px;
             background: var(--primary);
             color: white;
             position: fixed;
             height: 100vh;
-            padding: 30px 20px;
+            padding: 24px;
             display: flex;
             flex-direction: column;
             z-index: 100;
-            box-shadow: 4px 0 10px rgba(0,0,0,0.05);
+            /* box-shadow: 4px 0 10px rgba(0, 0, 0, 0.05); */
         }
 
         .sidebar-brand {
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-size: 1.25rem;
+            font-weight: 800;
             margin-bottom: 40px;
             display: flex;
             align-items: center;
             gap: 12px;
+            text-decoration: none;
+            color: white;
         }
 
-        .nav-menu { list-style: none; padding: 0; margin: 0; flex-grow: 1; }
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            flex-grow: 1;
+        }
 
         .nav-item {
             display: flex;
@@ -64,35 +75,39 @@
             gap: 12px;
             color: rgba(255, 255, 255, 0.7);
             text-decoration: none;
-            padding: 14px 18px;
+            padding: 12px 16px;
             border-radius: 12px;
-            margin-bottom: 8px;
-            transition: all 0.2s;
-            font-weight: 500;
+            margin-bottom: 6px;
+            font-weight: 600;
         }
 
-        .nav-item:hover, .nav-item.active {
+
+
+        .nav-item:hover {
             background: rgba(255, 255, 255, 0.1);
             color: white;
         }
 
         .nav-item.active {
             background: var(--whatsapp-green);
-            box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+            color: white;
+            box-shadow: 0 10px 15px -3px rgba(37, 211, 102, 0.2);
         }
 
         .logout-btn {
             margin-top: auto;
             color: #fecaca;
             border: 1px solid rgba(254, 202, 202, 0.2);
+            justify-content: center;
         }
+
 
         /* --- MAIN CONTENT --- */
         .main-content {
-            margin-left: 280px;
+            margin-left: 260px;
             flex: 1;
             padding: 40px;
-            max-width: 1200px;
+            max-width: 1400px;
         }
 
         .top-header {
@@ -102,7 +117,12 @@
             margin-bottom: 40px;
         }
 
-        .top-header h1 { margin: 0; font-size: 2rem; font-weight: 800; letter-spacing: -0.02em; }
+        .top-header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
 
         /* --- NOTIFICATION STRIP --- */
         .notification-strip {
@@ -131,9 +151,17 @@
         }
 
         @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(37, 211, 102, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+            0% {
+                box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.4);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(37, 211, 102, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(37, 211, 102, 0);
+            }
         }
 
         /* --- SECTION CONTROLS --- */
@@ -155,7 +183,13 @@
             transform: scale(1.01);
         }
 
-        .section-title { display: flex; align-items: center; gap: 15px; font-weight: 700; font-size: 1.1rem; }
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
 
         .count-badge {
             background: var(--danger);
@@ -165,16 +199,45 @@
             font-size: 0.85rem;
         }
 
-        /* --- CARDS --- */
+        /* --- SCROLLABLE CONTENT AREA --- */
         .content-area {
             max-height: 0;
-            overflow: hidden;
-            transition: all 0.5s ease-in-out;
+            overflow-y: auto;
+            /* Changed to auto for scrollability */
+            overflow-x: hidden;
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease;
             opacity: 0;
+            padding-right: 5px;
+            /* Space for scrollbar */
         }
 
-        .content-area.show { max-height: 5000px; opacity: 1; margin-bottom: 30px; }
+        .content-area.show {
+            max-height: 600px;
+            /* Set a fixed height for the scrollable container */
+            opacity: 1;
+            margin-bottom: 30px;
+        }
 
+        /* Custom Scrollbar Styling */
+        .content-area::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .content-area::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 10px;
+        }
+
+        .content-area::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        .content-area::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* --- CARDS --- */
         .card {
             background: var(--white);
             border-radius: 20px;
@@ -189,8 +252,35 @@
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
         }
 
-        .group-name { font-size: 1.3rem; font-weight: 800; color: var(--text-main); margin: 0 0 5px 0; }
-        
+        .card-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #dcf8c6;
+            color: var(--primary);
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .card-close:hover {
+            background: var(--whatsapp-green);
+            color: white;
+        }
+
+        .group-name {
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0 0 5px 0;
+        }
+
         .msg-text {
             background: #f8fafc;
             padding: 15px;
@@ -210,7 +300,21 @@
             letter-spacing: 0.05em;
         }
 
-        /* Buttons */
+        .status-critical {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .status-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-notice {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
         .btn {
             padding: 12px 24px;
             border-radius: 12px;
@@ -221,21 +325,51 @@
             display: inline-flex;
             align-items: center;
             gap: 10px;
+            text-decoration: none;
         }
 
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: var(--whatsapp-green); transform: translateY(-2px); }
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
 
-        .btn-secondary { background: #f1f5f9; color: var(--text-main); }
-        .btn-secondary:hover { background: #e2e8f0; }
+        .btn-primary:hover {
+            background: var(--whatsapp-green);
+            transform: translateY(-2px);
+        }
 
-        .chevron { transition: transform 0.3s; color: var(--text-muted); }
-        .rotate { transform: rotate(180deg); }
+        .btn-secondary {
+            background: #f1f5f9;
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background: #e2e8f0;
+        }
+
+        .chevron {
+            transition: transform 0.3s;
+            color: var(--text-muted);
+        }
+
+        .rotate {
+            transform: rotate(180deg);
+        }
 
         @media (max-width: 900px) {
-            .sidebar { width: 80px; padding: 20px 10px; }
-            .sidebar-brand span, .nav-item span { display: none; }
-            .main-content { margin-left: 80px; }
+            .sidebar {
+                width: 80px;
+                padding: 20px 10px;
+            }
+
+            .sidebar-brand span,
+            .nav-item span {
+                display: none;
+            }
+
+            .main-content {
+                margin-left: 80px;
+            }
         }
     </style>
 </head>
@@ -244,28 +378,85 @@
 
     <nav class="sidebar">
         <div class="sidebar-brand">
-            <i class="fab fa-whatsapp" style="font-size: 2rem; color: var(--whatsapp-green);"></i> <span>OAS Support</span>
+            <i class="fab fa-whatsapp" style="font-size: 1.8rem; color: var(--whatsapp-green);"></i> <span>OAS
+                Support</span>
         </div>
         <div class="nav-menu">
-            <a href="/dashboard" class="nav-item active">
-                <i class="fas fa-th-large"></i> <span>Dashboard</span>
-            </a>
-            <a href="/configure" class="nav-item">
-                <i class="fas fa-sliders-h"></i> <span>Configuration</span>
-            </a>
+
+            <% if (role=="admin" ) { %>
+
+                <a href="/dashboard?dashboard?role=<%= encodeURIComponent(role) %>
+                    &team=<%= encodeURIComponent(team) %>
+                    &groups=<%= encodeURIComponent(JSON.stringify(groups)) %>
+                    &numbers=<%= encodeURIComponent(numbers.join(',')) %>
+                    &names=<%= encodeURIComponent(names.join(',')) %>" class="nav-item active">
+                    <i class="fas fa-th-large"></i> <span>Dashboard</span>
+                </a>
+                 
+                <a href="/configure_admin?role=<%= encodeURIComponent(role) %>
+                    &team=<%= encodeURIComponent(team) %>
+                    &groups=<%= encodeURIComponent(JSON.stringify(groups)) %>
+                    &numbers=<%= encodeURIComponent(numbers.join(',')) %>
+                    &names=<%= encodeURIComponent(names.join(',')) %>" class="nav-item">
+                        <i class="fas fa-sliders-h"></i> <span>Configuration</span>
+                    </a>
+
+                <a href="/handle_team?role=<%= encodeURIComponent(role) %>
+                    &team=<%= encodeURIComponent(team) %>
+                    &groups=<%= encodeURIComponent(JSON.stringify(groups)) %>
+                    &numbers=<%= encodeURIComponent(numbers.join(',')) %>
+                    &names=<%= encodeURIComponent(names.join(',')) %>" class="nav-item">
+                    <i class="fas fa-users-cog"></i> <span>Handle Team</span>
+                </a>
+
+                <% } else if (role=="lead" ) { %>
+
+                    <a href="/dashboard?role=<%= encodeURIComponent(role) %>
+                    &team=<%= encodeURIComponent(team) %>
+                    &groups=<%= encodeURIComponent(JSON.stringify(groups)) %>
+                    &numbers=<%= encodeURIComponent(numbers.join(',')) %>
+                    &names=<%= encodeURIComponent(names.join(',')) %>" class="nav-item active">
+                        <i class="fas fa-th-large"></i> <span>Dashboard</span>
+                    </a>
+                    <a href="/configure?role=<%= encodeURIComponent(role) %>
+                    &team=<%= encodeURIComponent(team) %>
+                    &groups=<%= encodeURIComponent(JSON.stringify(groups)) %>
+                    &numbers=<%= encodeURIComponent(numbers.join(',')) %>
+                    &names=<%= encodeURIComponent(names.join(',')) %>" class="nav-item">
+                        <i class="fas fa-sliders-h"></i> <span>Configuration</span>
+                    </a>
+
+                    <% } else { %>
+
+                        <a href="/dashboard?role=<%= encodeURIComponent(role) %>
+                    &team=<%= encodeURIComponent(team) %>
+                    &groups=<%= encodeURIComponent(JSON.stringify(groups)) %>
+                    &numbers=<%= encodeURIComponent(numbers.join(',')) %>
+                    &names=<%= encodeURIComponent(names.join(',')) %>" class="nav-item active">
+                            <i class="fas fa-th-large"></i> <span>Dashboard</span>
+                        </a>
+
+                        <% } %>
+
         </div>
+
         <a href="/logout_bot" class="nav-item logout-btn">
-            <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+            <i class="fas fa-power-off"></i> <span>Logout</span>
         </a>
+
     </nav>
 
     <main class="main-content">
         <header class="top-header">
             <div>
-                <h1>Support Overview</h1>
+                <h1>Support Overview: <%= (team && team !== "undefined") ? team : "Admin" %></h1>
+
+
+
                 <p style="color: var(--text-muted); margin: 5px 0 0;">Real-time monitoring of customer inquiries</p>
             </div>
-            <div class="status-pill" style="background: #dcf8c6; color: #075e54; display: flex; align-items: center; gap: 8px;">
+            <div class="status-pill"
+                style="background: #dcf8c6; color: #075e54; display: flex; align-items: center; gap: 8px;">
                 <span style="width: 8px; height: 8px; background: #25d366; border-radius: 50%;"></span>
                 System Live
             </div>
@@ -274,98 +465,118 @@
         <div class="notification-strip">
             <i class="fas fa-paper-plane" style="color: var(--text-muted); margin-right: 10px;"></i>
             <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-muted);">Alerting:</span>
-            <% if (current_send.length === 0) { %>
+            <% if (current_send.length===0) { %>
                 <span style="font-size: 0.85rem; color: var(--text-muted);">None (Standby)</span>
-            <% } else { %>
-                <% current_send.forEach(c => { %>
-                    <div class="notify-pill">
-                        <i class="fas fa-spinner fa-spin" style="font-size: 10px;"></i> <%= c %>
-                    </div>
-                <% }) %>
-            <% } %>
+                <% } else { %>
+                    <% current_send.forEach(c=> { %>
+                        <div class="notify-pill">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 10px;"></i>
+                            <%= c %>
+                        </div>
+                        <% }) %>
+                            <% } %>
         </div>
 
         <div class="section-trigger" onclick="toggleSection('attentionContent', 'chev1')">
             <div class="section-title">
-                <div style="width: 40px; height: 40px; background: #fee2e2; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <div
+                    style="width: 40px; height: 40px; background: #fee2e2; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
                     <i class="fas fa-bell" style="color: var(--danger);"></i>
                 </div>
                 Priority Requests
-                <span class="count-badge"><%= needsAttention.length %></span>
+                <span class="count-badge">
+                    <%= needsAttention.length %>
+                </span>
             </div>
             <i class="fas fa-chevron-down chevron" id="chev1"></i>
         </div>
 
         <div id="attentionContent" class="content-area show">
-            <% if(needsAttention.length === 0) { %>
-                <div class="card" style="text-align: center; border: 2px dashed var(--border); background: transparent;">
-                    <i class="fas fa-check-circle" style="font-size: 2rem; color: var(--whatsapp-green); margin-bottom: 10px; display: block;"></i>
-                    <p style="color: var(--text-muted); font-weight: 500;">Inbox Zero! All customers are currently assisted.</p>
+            <% if(needsAttention.length===0) { %>
+                <div class="card"
+                    style="text-align: center; border: 2px dashed var(--border); background: transparent;">
+                    <i class="fas fa-check-circle"
+                        style="font-size: 2rem; color: var(--whatsapp-green); margin-bottom: 10px; display: block;"></i>
+                    <p style="color: var(--text-muted); font-weight: 500;">Inbox Zero! All customers are currently
+                        assisted.</p>
                 </div>
-            <% } %>
+                <% } %>
 
-            <% needsAttention.forEach(group => { %>
-                <div class="card">
-                    <button class="card-close" data-group="<%= group.group_name %>" data-message="<%= group.message_text %>" onclick="send_attention_status(event, this)">
-                        <i class="fas fa-check"></i>
-                    </button>
+                    <% needsAttention.forEach(group=> { %>
+                        <div class="card">
+                            <button class="card-close" data-group="<%= group.group_name %>"
+                                data-message="<%= group.message_text %>" onclick="send_attention_status(event, this)">
+                                <i class="fas fa-check"></i>
+                            </button>
 
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                        <div>
-                            <% if (group.is_one) { %>
-                                <span class="status-pill status-critical">Critical > 60m</span>
-                            <% } else if (group.is_thr) { %>
-                                <span class="status-pill status-warning">Warning > 30m</span>
-                            <% } else { %>
-                                <span class="status-pill status-notice">Notice > 15m</span>
-                            <% } %>
-                            <h3 class="group-name"><%= group.group_name %></h3>
-                            <span class="time-text" style="color: var(--text-muted); font-size: 0.85rem;">
-                                <i class="far fa-clock"></i> Received: <%= group.last_message_time %>
-                            </span>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div>
+
+                                    <h3 class="group-name">
+                                        <%= group.group_name %>
+                                    </h3>
+                                    <span class="time-text" style="color: var(--text-muted); font-size: 0.85rem;">
+                                        <i class="far fa-clock"></i> Received: <%= group.last_message_time %>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="msg-text">
+                                "<%= group.last_message_text %>"
+                            </div>
+
+                            <div class="card-actions">
+                                <a href="/chat/<%= encodeURIComponent(group.group_name) %>?role=<%= encodeURIComponent(role) %>
+                                &team=<%= encodeURIComponent(team) %>
+                                &groups=<%= encodeURIComponent(JSON.stringify(groups)) %>
+                                &numbers=<%= encodeURIComponent(numbers.join(',')) %>
+                                &names=<%= encodeURIComponent(names.join(',')) %>" class="btn btn-primary">
+                                    <i class="fas fa-external-link-alt"></i> Open Chat
+                                </a>
+                                <button class="btn btn-secondary" data-group="<%= group.group_name %>"
+                                    data-message="<%= group.message_text %>" onclick="send_just_remarks(event, this)">
+                                    <i class="far fa-sticky-note"></i> Notes
+                                </button>
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="msg-text">
-                        "<%= group.last_message_text %>"
-                    </div>
-
-                    <div class="card-actions">
-                        <a href="/chat/<%= encodeURIComponent(group.group_name) %>" class="btn btn-primary">
-                            <i class="fas fa-external-link-alt"></i> Open Chat
-                        </a>
-                        <button class="btn btn-secondary" data-group="<%= group.group_name %>" data-message="<%= group.message_text %>" onclick="send_just_remarks(event, this)">
-                            <i class="far fa-sticky-note"></i> Notes
-                        </button>
-                    </div>
-                </div>
-            <% }) %>
+                        <% }) %>
         </div>
 
         <div class="section-trigger" onclick="toggleSection('allGroups', 'chev2')">
             <div class="section-title">
-                <div style="width: 40px; height: 40px; background: #e0f2fe; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                <div
+                    style="width: 40px; height: 40px; background: #e0f2fe; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
                     <i class="fas fa-users" style="color: var(--info);"></i>
                 </div>
                 Active Channels
-                <span class="count-badge" style="background: var(--info);"><%= groups.length %></span>
+                <span class="count-badge" style="background: var(--info);">
+                    <%= clean_groups.length %>
+                </span>
             </div>
             <i class="fas fa-chevron-down chevron" id="chev2"></i>
         </div>
 
         <div id="allGroups" class="content-area">
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
-                <% groups.forEach(g => { %>
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; padding-bottom: 20px;">
+                <% clean_groups.forEach(g=> { %>
                     <div class="card" style="padding: 20px; margin-bottom: 0;">
-                        <h4 style="margin: 0 0 10px 0; color: var(--primary);"><%= g.groupName %></h4>
+                        <h4 style="margin: 0 0 10px 0; color: var(--primary);">
+                            <%= g.groupName %>
+                        </h4>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <small style="color: var(--text-muted);">Active: <%= g.timestamp %></small>
-                            <a href="/chat/<%= encodeURIComponent(g.groupName) %>" style="color: var(--info); text-decoration: none; font-weight: 700; font-size: 0.8rem;">
+                            <a href="/chat/<%= encodeURIComponent(g.groupName) %>?role=<%= encodeURIComponent(role) %>
+                    &team=<%= encodeURIComponent(team) %>
+                    &groups=<%= encodeURIComponent(JSON.stringify(groups)) %>
+                    &numbers=<%= encodeURIComponent(numbers.join(',')) %>
+                    &names=<%= encodeURIComponent(names.join(',')) %>"
+                                style="color: var(--info); text-decoration: none; font-weight: 700; font-size: 0.8rem;">
                                 HISTORY →
                             </a>
                         </div>
                     </div>
-                <% }) %>
+                    <% }) %>
             </div>
         </div>
     </main>
@@ -433,9 +644,6 @@
                 }
             }
         }
-
-
-        
     </script>
 </body>
 
